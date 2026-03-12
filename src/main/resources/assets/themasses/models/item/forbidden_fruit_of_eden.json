@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "themasses:item/food/forbidden_fruit_of_eden"
+  }
+}

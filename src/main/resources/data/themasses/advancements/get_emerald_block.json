@@ -1,0 +1,29 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:brewing_stand"
+    },
+    "title": {
+      "translate": "advancements.themasses.get_emerald_block.title"
+    },
+    "description": {
+      "translate": "advancements.themasses.get_emerald_block.description"
+    },
+    "frame": "task"
+  },
+  "parent": "themasses:root",
+  "criteria": {
+    "get_emerald_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:emerald_block"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

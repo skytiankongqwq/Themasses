@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    "P1P",
+    " 1 "
+  ],
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "S": {
+      "item": "minecraft:nether_star"
+    },
+    "1": {
+      "item": "themasses:soul_block"
+    }
+  },
+  "result": {
+    "item": "themasses:soul_banner",
+    "count": 1
+  }
+}

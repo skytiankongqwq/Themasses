@@ -1,0 +1,6 @@
+{
+  "size": 1,
+  "icon": "themasses:item/slots/crown_slot",
+  "order": 1,
+  "drop_rule": "ALWAYS_KEEP"
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "themasses:block/soul_block_top",
+    "side": "themasses:block/soul_block_side"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "itemGroup.themasses":"芸芸众生",
+  "itemGroup.zhongshengsuozhi": "众生所职",
+  "curios.identifier.vocation": "职业",
+  "curios.identifier.person": "位格",
+  "curios.identifier.mysterious": "神秘群友",
+  "curios.identifier.crown": "王冠",
+  "curios.modifiers.crown": "当佩戴在王冠槽位时:",
+  "curios.modifiers.mysterious": "饰品加成",
+  "key.categories.themasses": "芸芸众生",
+  "key.themasses.ability": "功能",
+  "tooltip.themasses.shift_prompt": "按住 %s 键查看详情。",
+  "effect.themasses.bamboozled": "被坑了",
+  "effect.themasses.thinking_quietly": "别动，我在思考",
+  "effect.themasses.one_idea": "ei！我有一个点子",
+  "effect.themasses.paradox_virus": "得见天光",
+  "item.minecraft.potion.effect.bamboozled_potion": "你哪来的这玩意",
+  "item.minecraft.splash_potion.effect.bamboozled_potion": "坑人药水",
+  "item.minecraft.lingering_potion.effect.bamboozled_potion": "这玩意你又是哪来的(",
+
+  "advancements.themasses.root.title": "芸芸众生",
+  "advancements.themasses.root.description": "属于《The Masses》的旅程！",
+  "advancements.themasses.get_emerald_block.title": "你或许可以用它做点什么",
+  "advancements.themasses.get_emerald_block.description": "~看看图标呢",
+
+  "block.themasses.soul_block": "灵魂木",
+
+  "item.themasses.laowang237_food": "烤老王",
+  "tooltip.themasses.laowang237_food.line1": "补药赤窝！窝不嚎赤！",
+  "item.themasses.laowang237": "laowang237",
+  "tooltip.themasses.laowang237.line1": "谁是baka了！",
+  "attribute.modifier.laowang237_health_bonus": "老王生命值加成",
+  "attribute.modifier.laowang237_reach_bonus": "方块放置距离加成",
+  "item.themasses.soul_banner": "万魂幡",
+  "item.themasses.soul_banner.desc": "聚生灵之怨，炼不灭之魂。",
+
+  "item.themasses.dazhi": "DaZhi",
+  "tooltip.themasses.dazhi.line1": "安~抱走了！",
+  "item.themasses.spirit_liquid_vial": "灵液瓶",
+  "tooltip.themasses.spirit_liquid_vial.default_line1": "神秘遗物",
+  "tooltip.themasses.spirit_liquid_vial.shift_line1": "藐视神明前需要足够了解神明......",
+  "tooltip.themasses.spirit_liquid_vial.shift_line2": "饮用以永久%s饰品栏位",
+
+  "tooltip.themasses.green_hand_PoTF.line1": "这其实是瓶药水)",
+  "item.themasses.green_hand_potf": "green_hand_PoTF",
+
+  "tooltip.themasses.lyuezhuo.line1": "知善恶是自由的终点，亦是自由的开端",
+  "item.themasses.lyuezhuo": "Lyuezhuo",
+  "item.themasses.forbidden_fruit_of_eden": "伊甸禁果",
+  "item.themasses.forbidden_fruit.tooltip": "切勿吃下禁果，那罪神也不赦",
+  "item.themasses.forbidden_fruit.exp_gained": "你获得了 %s 点经验值！ ",
+
+  "item.themasses.heishatang": "黑鲨糖",
+  "tooltip.themasses.heishatang.line1": "5152",
+  "item.themasses.heishatangring": "妙用之戒",
+
+  "block.themasses.laxauviotre": "Auviotre",
+  "tooltip.themasses.Auviotre.line1": "'-'",
+  "item.themasses.auv_staff": "聚形之杖",
+  "tooltip.themasses.auvstaff.line1": "*闻起来想吃不了的压缩饼干",
+
+  "item.themasses.player__7": "Player__7",
+  "tooltip.themasses.player7.line1": "主啊，难道你要像毁灭索多玛一样毁灭我们吗？",
+  "item.themasses.final_prayer": "终之祈",
+  "tooltip.themasses.final_prayer.line1": "当他们忿怒的大日到了，谁又能站的住呢？",
+
+  "item.themasses.xiaoarin": "XiaoArin",
+  "tooltip.themasses.XiaoArin.line1": "樱吹落叶随梦醒",
+  "item.themasses.dreamsakura": "梦樱的祝福",
+  "tooltip.themasses.DreamSakura.line1": "樱吹落叶随梦醒",
+
+  "item.themasses.bai_ze_li": "Bai_Ze_Li",
+  "tooltip.themasses.Baizeli.line1": "哈！哈！哈！",
+
+  "item.themasses.duvacein": "Duvacein",
+  "tooltip.themasses.Duvacein.line1": "Lingrah krosis saraan Strundu'ul, voth nid balaan klov praan nau. Naal Thu'umu, mu ofan nii nu, Dovahkiin, naal suleyk do Kaan, naal suleyk do Shor, ahrk naal suleyk do Atmorasewuth. Meyz nu Ysmir, Dovahsebrom. Dahmaan daar rok.",
+  "item.themasses.doof_gnawoal": "王老烤",
+  "tooltip.themasses.doof_gnawoal.line1": "A new hand touches the 732gnawoal. Listen. Hear me and obey."
+}

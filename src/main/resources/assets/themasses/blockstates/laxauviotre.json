@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "themasses:block/laxauviotre" },
+    "facing=south": { "model": "themasses:block/laxauviotre", "y": 180 },
+    "facing=east": { "model": "themasses:block/laxauviotre", "y": 90 },
+    "facing=west": { "model": "themasses:block/laxauviotre", "y": 270 }
+  }
+}

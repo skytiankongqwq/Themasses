@@ -1,0 +1,20 @@
+modLoader="javafml" #mandatory
+# A version range to match for said mod loader - for regular FML @Mod it will be the forge version
+loaderVersion="${loader_version_range}" #mandatory This is typically bumped every Minecraft version by Forge. See our download page for lists of versions.
+# The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.
+# Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.
+license="${mod_license}"
+
+[[mods]]
+modId="themasses"
+displayName="The Masses"
+version="${mod_version}"
+credits="灵液瓶 (spirit_liquid_vial) 的贴图和基础概念源于 [神秘遗物Enigmatic Legacy] 的 [ichor_bottle]。本 Mod 已对其功能进行了恶搞和修改。版权归原作者所有。"
+authors="${mod_authors}"
+description='''${mod_description}'''
+[[dependencies.themasses]]
+modId="curios"
+mandatory=true
+versionRange="[5.1.0,)"
+ordering="AFTER"
+side="BOTH"

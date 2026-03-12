@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "com.first.themasses.Mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "themasses.mixins.refmap.json",
+  "mixins": [
+    "food",
+    "PigMixin",
+    "MobMixin",
+    "EnderManMixin",
+    "HeishatangAccessors$LivingEntityAccessor",
+    "HeishatangAccessors$VillagerAccessor",
+    "buff.LivingEntityMixin",
+    "BossTagMixin",
+    "prop.Player7Mixin",
+    "mysterious.XiaoArinEntityMovementMixin",
+    "geckolib.GeckoCreeperMixin",
+    "buff.PigRendererMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+
