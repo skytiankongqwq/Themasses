@@ -31,7 +31,7 @@ import top.theillusivec4.curios.api.type.capability.ICurio;
 
 import java.util.Collection;
 import java.util.List;
-
+//M3饰品
 public class XIN_TIRIS extends Item {
 
     public XIN_TIRIS(Properties properties) {

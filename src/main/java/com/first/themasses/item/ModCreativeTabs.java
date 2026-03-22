@@ -24,8 +24,6 @@ public class ModCreativeTabs {
                         ModItems.ITEMS.getEntries().forEach(itemRegistryObject -> {
                             output.accept(itemRegistryObject.get());
                         });
-                        // 如果你有其他物品，比如 kunzhong，也加在这里
-                        // output.accept(ModItems.KUNZHONG.get());
                     })
                     .build());
 

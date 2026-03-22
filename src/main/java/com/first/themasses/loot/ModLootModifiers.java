@@ -1,0 +1,22 @@
+package com.first.themasses.loot;
+
+import com.first.themasses.TheMasses;
+import com.mojang.serialization.Codec;
+import net.minecraftforge.common.loot.IGlobalLootModifier;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+
+public class ModLootModifiers {
+    public static final DeferredRegister<Codec<? extends IGlobalLootModifier>> LOOT_MODIFIER_SERIALIZERS =
+            DeferredRegister.create(ForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, TheMasses.MOD_ID);
+
+    public static final RegistryObject<Codec<? extends IGlobalLootModifier>> ADD_ITEM =
+            LOOT_MODIFIER_SERIALIZERS.register("add_item", PebbleLootModifier.CODEC);
+
+    public static void register(IEventBus bus) {
+        System.err.println("!!!!! DEBUG: 正在注册战利品修改器序列化器 !!!!!");
+        LOOT_MODIFIER_SERIALIZERS.register(bus);
+    }
+}

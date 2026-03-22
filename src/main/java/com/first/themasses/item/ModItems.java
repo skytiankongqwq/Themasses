@@ -9,10 +9,7 @@ import com.first.themasses.item.food.DoofGnawoalItem;
 import com.first.themasses.item.food.ForbiddenFruitItem;
 import com.first.themasses.item.food.LaowangFoodLight;
 import com.first.themasses.item.food.SpiritLiquidVialItem;
-import com.first.themasses.item.prop.AuvStaff;
-import com.first.themasses.item.prop.DreamSakuraProp;
-import com.first.themasses.item.prop.FinalPrayerItem;
-import com.first.themasses.item.prop.HarikiriMaru;
+import com.first.themasses.item.prop.*;
 import com.first.themasses.item.sword.SoulBannerItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -284,15 +281,25 @@ public class    ModItems {
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {
                     return Component.translatable(this.getDescriptionId(pStack))
-                            .withStyle(s -> s.withColor(0x55FFFF)); // 极致精简写法
+                            .withStyle(s -> s.withColor(0x55FFFF));
                 }
             }
     );
     //m3饰品
-    //瓦克因饰品
     public static final RegistryObject<Item> XIN_TIRIS = ITEMS.register(
             "xin_tiris",
             () -> new XIN_TIRIS(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //m3的鹅卵石
+    public static final RegistryObject<Item> PEBBLE = ITEMS.register("pebble",
+            () -> new PebbleItem(new Item.Properties())
             {
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {

@@ -50,7 +50,6 @@ import java.util.UUID;
 
 /**
  * 饰品类：坤钟
- * 实现功能：时长属性加成、距离加成、群系探索、主动技能状态管理
  */
 public class KunZhong extends Item {
 

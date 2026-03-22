@@ -9,7 +9,9 @@ import com.first.themasses.entity.ModEntities;
 import com.first.themasses.events.buff.PlayerAntiGravityEvent;
 import com.first.themasses.item.ModCreativeTabs;
 import com.first.themasses.item.ModItems;
+import com.first.themasses.loot.ModLootModifiers;
 import com.first.themasses.networking.ModMessages;
+import com.first.themasses.worldgen.structure.ModStructures;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -62,6 +64,8 @@ public class TheMasses {
         ModPotions.register(modEventBus);
         SOUNDS.register(modEventBus);
         ModCreativeTabs.register(modEventBus);
+        ModStructures.register(modEventBus);
+        ModLootModifiers.register(modEventBus);
 
 
         ModMessages.register();
@@ -123,9 +127,4 @@ public class TheMasses {
     }//头衔类注册
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        // Do something when the server starts
-        LOGGER.info("HELLO from server starting");
-    }
 }

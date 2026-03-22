@@ -1,0 +1,22 @@
+{
+  "type": "themasses:add_item",
+  "conditions": [
+    {
+      "condition": "minecraft:any_matching_condition",
+      "terms": [
+        {
+          "condition": "minecraft:location_check",
+          "predicate": {
+            "block": {
+              "tag": "forge:chests"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "item": {
+    "id": "themasses:pebble",
+    "Count": 1
+  }
+}

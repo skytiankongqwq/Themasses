@@ -9,8 +9,17 @@ import com.first.themasses.util.PlayerCooldownManager; // 导入冷却管理类
 
 // 💥 修正导入：使用正确的 MobEffectEvent 拦截药水
 import net.minecraft.ChatFormatting;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.living.*;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.Event.Result;
 
 // 新增导入：用于虚空返回
@@ -554,6 +563,37 @@ public class ModEvents {
                     // 确保你 TouxianCommand 里的 refresh 方法使用了 EnumSet.allOf(Action.class)
                     ZhilingCommand.refresh(player);
                 }
+            }
+        }
+    }
+
+    //小碎石掉落逻辑
+    @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        LevelAccessor levelAccessor = event.getLevel();
+        // 确保在服务端运行且能转换为 Level
+        if (levelAccessor.isClientSide() || !(levelAccessor instanceof Level level)) return;
+
+        BlockState state = event.getState();
+        Player player = event.getPlayer();
+        ItemStack tool = player.getMainHandItem();
+
+        // 1. 判断是否是石头类方块
+        if (state.is(BlockTags.STONE_ORE_REPLACEABLES) || state.is(Blocks.STONE)) {
+
+            // 2. 优化：如果拥有精准采集，则不掉落小碎石
+            if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, tool) > 0) {
+                return;
+            }
+
+            // 3. 概率计算：基础 1%，受幸运值加成
+            double luck = player.getAttributeValue(Attributes.LUCK);
+            double dropChance = 0.01 + (luck * 0.002);
+
+            if (player.getRandom().nextDouble() < dropChance) {
+                BlockPos pos = event.getPos();
+                // 弹出掉落物
+                Block.popResource(level, pos, new ItemStack(ModItems.PEBBLE.get()));
             }
         }
     }

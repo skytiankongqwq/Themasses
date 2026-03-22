@@ -194,8 +194,8 @@ dependencies {
     compileOnly fg.deobf("curse.maven:mmmmmmmmmmmm-225738:6860192")
     runtimeOnly fg.deobf("curse.maven:mmmmmmmmmmmm-225738:6860192")
     //easy doll
-    compileOnly fg.deobf("curse.maven:easydoll-1418074:7404381")
-    runtimeOnly fg.deobf("curse.maven:easydoll-1418074:7404381")
+    compileOnly fg.deobf("curse.maven:easydoll-1418074:7781587")
+    runtimeOnly fg.deobf("curse.maven:easydoll-1418074:7781587")
     //诡乐
 
 
