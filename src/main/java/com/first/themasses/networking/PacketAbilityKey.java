@@ -1,9 +1,7 @@
 package com.first.themasses.networking;
 
-import com.first.themasses.curios.mysterious.Baizeli;
-import com.first.themasses.curios.mysterious.Playerseven;
-import com.first.themasses.curios.mysterious.XIN_TIRIS;
-import com.first.themasses.curios.mysterious.XiaoArin;
+import com.first.themasses.curios.all.MarbleShardItem;
+import com.first.themasses.curios.mysterious.*;
 import com.first.themasses.curios.ring.heishatangring;
 import com.first.themasses.events.mysterious.DuvaceinEvents;
 import com.first.themasses.events.mysterious.HeishatangEvents;
@@ -39,64 +37,41 @@ public class PacketAbilityKey {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
 
-            // --- 1. 处理 XiaoArin 饰品技能信号 (-888) ---
-            if (msg.targetId == -888) {
+            int id = msg.targetId;
+
+            // --- 1. XiaoArin (-888) ---
+            if (id == -888) {
                 CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XiaoArin)
-                        .ifPresent(slot -> {
-                            // 调用 XiaoArin 类中的静态触发方法
-                            XiaoArin.triggerTimeStop(player);
-                        });
+                        .ifPresent(slot -> XiaoArin.triggerTimeStop(player));
             }
 
-            // --- 2. 收到 Playerseven 饰品技能信号 (-777) ---
-            else if (msg.targetId == -777) {
+            // --- 2. Playerseven (-777) ---
+            if (id == -777) {
                 CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof Playerseven)
-                        .ifPresent(slot -> {
-                            Playerseven.triggerAbility(player);
-                        });
+                        .ifPresent(slot -> Playerseven.triggerAbility(player));
             }
 
-            // --- 3. 收到白泽 (Baizeli) 饰品技能信号 (-666) ---
-            else if (msg.targetId == -666) {
+            // --- 3. Baizeli (-666) ---
+            if (id == -666) {
                 CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof Baizeli)
                         .ifPresent(slot -> {
                             ItemStack stack = slot.stack();
-                            // 调用 Baizeli 类中定义的技能启动方法
                             ((Baizeli) stack.getItem()).startSkill(stack, player);
                         });
             }
 
-            // --- 4. 收到戒指切换信号 (-2) ---
-            else if (msg.targetId == -2) {
+            // --- 4. 戒指切换 (-2) ---
+            if (id == -2) {
                 CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof heishatangring)
+                        .ifPresent(slot -> heishatangring.toggleMode(player));
+            }
+
+            // --- 5. KunZhong (-999) ---
+            if (id == -999) {
+                CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof KunZhong)
                         .ifPresent(slot -> {
-                            heishatangring.toggleMode(player);
-                        });
-            }
-
-            // --- 5. 处理指向性技能 (targetId >= 0) ---
-            else if (msg.targetId >= 0) {
-                Entity target = player.level().getEntity(msg.targetId);
-                if (target instanceof LivingEntity livingTarget) {
-                    HeishatangEvents.executeHeishatangAbility(player, livingTarget);
-                }
-            }
-
-            // --- 6. targetId == -1 的空按逻辑 ---
-            else if (msg.targetId == -1) {
-                // 预留位置
-            }
-
-            // --- 7. 处理 KunZhong (坤中) 饰品技能信号 (-999) ---
-            else if (msg.targetId == -999) {
-                // 查找玩家身上是否有“坤中”饰品
-                CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof com.first.themasses.curios.mysterious.KunZhong)
-                        .ifPresent(slot -> {
-                            // 获取饰品堆栈
-                            net.minecraft.world.item.ItemStack stack = slot.stack();
-                            com.first.themasses.curios.mysterious.KunZhong item = (com.first.themasses.curios.mysterious.KunZhong) stack.getItem();
-
-                            // 逻辑判定：如果技能已开启，则关闭；如果未开启，则开启
+                            ItemStack stack = slot.stack();
+                            KunZhong item = (KunZhong) stack.getItem();
                             if (stack.getOrCreateTag().getBoolean("SkillActive")) {
                                 item.stopSkill(stack, player);
                             } else {
@@ -105,25 +80,38 @@ public class PacketAbilityKey {
                         });
             }
 
-            // --- 8. 收到 Playerseven 饰品技能信号 (-777) ---
-            else if (msg.targetId == -555) {
-                // 切换开关状态
+            // --- 6. Duvacein (-555) ---
+            if (id == -555) {
                 DuvaceinEvents.isEnabled = !DuvaceinEvents.isEnabled;
-
-                // 给玩家发个消息提示，省得不知道开没开 (可选)
                 String status = DuvaceinEvents.isEnabled ? "§a开启" : "§c关闭";
                 player.displayClientMessage(Component.literal("幽匿感染已 " + status), true);
             }
-            // --- 9. 收到 XIN_TIRIS 饰品技能信号 (-444) ---
-            else if (msg.targetId == -444) {
+
+            // --- 7. XIN_TIRIS (-444) ---
+            if (id == -444) {
                 CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XIN_TIRIS)
-                        .ifPresent(slot -> {
-                            XIN_TIRIS.executeXINTirisSkill(player);
-                        });
+                        .ifPresent(slot -> XIN_TIRIS.executeXINTirisSkill(player));
             }
 
+            // --- 8. MarbleShard (-5152) ---
+            if (id == -5152) {
+                CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof MarbleShardItem)
+                        .ifPresent(slot -> MarbleShardItem.executeMarbleShardSkill(player));
+            }
 
+            // --- 9. haozi (-333) ---
+            if (id == -333) {
+                CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof haozi)
+                        .ifPresent(slot -> haozi.executeHaoziSkill(player));
+            }
 
+            // --- 10. 指向性/实体判定 (仅当 id >= 0 时触发) ---
+            if (id >= 0) {
+                Entity target = player.level().getEntity(id);
+                if (target instanceof LivingEntity livingTarget) {
+                    HeishatangEvents.executeHeishatangAbility(player, livingTarget);
+                }
+            }
         });
         ctx.get().setPacketHandled(true);
     }

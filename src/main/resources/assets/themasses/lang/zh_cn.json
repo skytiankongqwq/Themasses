@@ -78,7 +78,17 @@
   "tooltip.themasses.doof_gnawoal.line1": "A new hand touches the 732gnawoal. Listen. Hear me and obey.",
 
   "item.themasses.xin_tiris": "XIN_TIRIS",
-  "tooltip.themasses.xin_tiris.line1": "m3是baka",
+  "tooltip.themasses.xin_tiris.line1": "来自某位蓝色圆环状圣徒",
   "item.themasses.pebble": "鹅卵石",
-  "tooltip.themasses.pebble.line1": "m3是baka"
+  "tooltip.themasses.pebble.line1": "这块石片的手感比它看上去更温热…你可以尝试引导它产生一些变化",
+
+  "item.themasses.marbleshard": "大理石碎片",
+  "tooltip.themasses.marble_shard.line1": "\uD83D\uDCA7\uD83D\uDCA7\uD83D\uDCA7\uD83D\uDCA7\uD83D\uDCA7",
+  "item.themasses.haozi": "Player_VI",
+  "tooltip.themasses.haozi.line1": "亻尔女子，请问附近的🐷在哪",
+
+  "item.themasses.zhaohuanshiliandao": "召唤师镰刀",
+  "tooltip.themasses.summoner.line1": "颜文字是baka",
+  "item.themasses.yanwenzi": "颜文字",
+  "tooltip.themasses.yanwenzi.line1": "§b(╯°□°）╯︵ ┻━┻"
 }

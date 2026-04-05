@@ -25,7 +25,6 @@ import java.util.UUID;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-// 改为实现 ICurioItem 接口，而不是继承第三方基类
 public class DaZhi extends Item implements ICurioItem {
 
     private static final UUID REACH_UUID = UUID.fromString("b72e1c9d-5555-4b2a-a92e-336c5332f144");

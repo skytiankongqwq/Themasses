@@ -1,5 +1,6 @@
 package com.first.themasses.events.mysterious;
 //p7饰品事件
+import com.first.themasses.curios.mysterious.Playerseven;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.TagKey;
@@ -70,15 +71,20 @@ public class PlayersevenEvents {
         }
 
         // --- 逻辑 B：玩家被攻击（重置对应 Boss 的连击） ---
-        // 如果受击者是玩家，且攻击者是带有 Boss 标签的生物
         if (event.getEntity() instanceof Player player && event.getSource().getEntity() instanceof LivingEntity attacker) {
-            if (attacker.getType().is(BOSS_TAG)) {
-                // 精准重置：只清除“打了玩家的那个 Boss”的连击数
-                attacker.getPersistentData().putInt("P7_BossCombo", 0);
+            top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+                    .findFirstCurio(player, stack -> stack.getItem() instanceof Playerseven)
+                    .ifPresent(slot -> {
 
-                // 可选：添加一个粒子效果或提示，反馈连击已重置
-                player.displayClientMessage(Component.literal("§c连击已中断！"), true);
-            }
+                        // 2. 如果戴了饰品，再检查攻击者是否是 Boss
+                        if (attacker.getType().is(BOSS_TAG)) {
+                            // 精准重置：只清除“打了玩家的那个 Boss”的连击数
+                            attacker.getPersistentData().putInt("P7_BossCombo", 0);
+
+                            // 反馈提示
+                            player.displayClientMessage(Component.literal("§c由于受到攻击，连击已中断！"), true);
+                        }
+                    });
         }
     }
 

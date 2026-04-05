@@ -1,8 +1,8 @@
-package com.first.themasses.events.ironspell;
+package com.first.themasses.events;
 
 import com.first.themasses.curios.mysterious.DaZhi;
 import com.first.themasses.curios.mysterious.Kanghuoyaoshui;
-import net.minecraft.network.chat.Component;
+import com.first.themasses.curios.mysterious.haozi;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -23,7 +23,7 @@ public class TooltipFilterEvent {
                 // 1. 绝对不要删掉第一行物品名称
                 if (text.equals(stack.getHoverName().getString())) return false;
                 // 2. 保留你自己的紫色文本 (假设你的翻译键里有 dazhi)
-                if (text.contains("抱走了") || text.contains("dazhi")) return false;
+                if (text.contains("themasses") || text.contains("dazhi")) return false;
                 // 3. 保留 Curios 原生的“饰品加成”标题和属性 (如果你想留着的话)
                 if (text.contains("饰品加成") || text.contains("方块范围")) return false;
                 // 4. 剩下的全部干掉：
@@ -51,6 +51,20 @@ public class TooltipFilterEvent {
                     return true;
                 }
                 return false;
+            });
+        }
+        else if (stack.getItem() instanceof haozi) {
+            // 移除所有不是你自己添加的描述行
+            // 我们通过排除法：只保留第一行(名字)和你自定义的那一行(翻译键包含 dazhi)
+            event.getToolTip().removeIf(component -> {
+                String text = component.getString();
+                // 1. 绝对不要删掉第一行物品名称
+                if (text.equals(stack.getHoverName().getString())) return false;
+                // 2. 保留你自己的紫色文本 (假设你的翻译键里有 dazhi)
+                if (text.contains("请问附近的") || text.contains("Player_VI")) return false;
+                if (text.contains("themasses") || text.contains("神秘群友")) return false;
+                // 4. 剩下的全部干掉：
+                return true;
             });
         }
     }

@@ -2,6 +2,7 @@ package com.first.themasses.item;
 
 import com.first.themasses.TheMasses;
 import com.first.themasses.block.ModBlock;
+import com.first.themasses.curios.all.MarbleShardItem;
 import com.first.themasses.curios.mysterious.*;
 import com.first.themasses.curios.ring.heishatangring;
 import com.first.themasses.effect.ModEffects;
@@ -41,16 +42,6 @@ public class    ModItems {
                     return super.getName(stack).copy().withStyle(ChatFormatting.DARK_PURPLE);
                 }
             });
-    //Auv饰品
-    public static final RegistryObject<Item> AUVIOTRE_ITEM = ITEMS.register("laxauviotre",
-            () -> new Auviotre(ModBlock.AUVIOTRE_BLOCK.get(),
-                    new Item.Properties().stacksTo(1)){
-                @Override
-                public @NotNull Component getName(@NotNull ItemStack stack) {
-                    return super.getName(stack).copy().withStyle(ChatFormatting.DARK_PURPLE);
-                }
-            }
-    );
     //老王食物
     public static final RegistryObject<Item> LAOWANG237_FOOD = ITEMS.register("laowang237_food",
             // 💥 修正：使用匿名类扩展 LaowangFoodLight 并覆盖 getName()
@@ -132,6 +123,28 @@ public class    ModItems {
                 }
             }
     );
+    //Auv饰品
+    public static final RegistryObject<Item> AUVIOTRE_ITEM = ITEMS.register("laxauviotre",
+            () -> new Auviotre(ModBlock.AUVIOTRE_BLOCK.get(),
+                    new Item.Properties().stacksTo(1)){
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack stack) {
+                    return super.getName(stack).copy().withStyle(ChatFormatting.DARK_PURPLE);
+                }
+            }
+    );
+    //聚形之杖
+    public static final RegistryObject<Item> AUV_STAFF = ITEMS.register("auv_staff",
+            () -> new AuvStaff(new Item.Properties()
+                    .stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
     //万魂幡
     public static final RegistryObject<Item> SOUL_BANNER = ITEMS.register("soul_banner",
             () -> new SoulBannerItem(new Item.Properties().fireResistant()) {
@@ -159,18 +172,6 @@ public class    ModItems {
     public static final RegistryObject<Item> HEISHATANGRING = ITEMS.register(
             "heishatangring",
             () -> new heishatangring(new Item.Properties().stacksTo(1))
-            {
-                @Override
-                public @NotNull Component getName(@NotNull ItemStack pStack) {
-                    return Component.translatable(this.getDescriptionId(pStack))
-                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
-                }
-            }
-    );
-    //聚形之杖
-    public static final RegistryObject<Item> AUV_STAFF = ITEMS.register("auv_staff",
-            () -> new AuvStaff(new Item.Properties()
-                    .stacksTo(1))
             {
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {
@@ -300,6 +301,54 @@ public class    ModItems {
     //m3的鹅卵石
     public static final RegistryObject<Item> PEBBLE = ITEMS.register("pebble",
             () -> new PebbleItem(new Item.Properties())
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //大理石碎片
+    public static final RegistryObject<Item> MARBLESHARD = ITEMS.register(
+            "marbleshard",
+            () -> new MarbleShardItem(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //haozi饰品
+    public static final RegistryObject<Item> HAOZI = ITEMS.register(
+            "haozi",
+            () -> new haozi(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //颜文字饰品
+    public static final RegistryObject<Item> YANWENZI = ITEMS.register(
+            "yanwenzi",
+            () -> new YanWenZi(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //颜文字的召唤师镰刀
+    public static final RegistryObject<Item> ZHAOHUANSHILIANDAO = ITEMS.register(
+            "zhaohuanshiliandao",
+            () -> new SummonerScythe(new Item.Properties().stacksTo(1))
             {
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {

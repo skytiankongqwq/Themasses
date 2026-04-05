@@ -25,7 +25,14 @@ import top.theillusivec4.curios.api.SlotContext;
 //6攻击时70%出现小行星
 //7.夜晚攻击的目标会获得发光buff，攻击有发光buff的生物伤害增加50%，白天伤害减少-20%,如果自己有发光buff，则持续时间内伤害减免10%
 import java.util.List;
-
+//1.初始有20的护盾，可以抵挡等额伤害，通过紫水晶充能（死了也充能qwq）
+//2.玩家在100-150格高且头上没有遮挡的晚上（13000tick到20000tick）这个期间获得80%的伤害减免，
+//3.踩在紫水晶方块上持续获得瞬间治疗1
+//4.免疫摔落伤害，在5格以上高度后坠地时对周围生物造成(落地距离-5)×2的伤害
+//5加个击杀生物60%掉落1-3个紫水晶
+//6攻击时70%出现小行星
+//7.夜晚攻击的目标会获得发光buff，攻击有发光buff的生物伤害增加50%，白天伤害减少-20%
+//如果自己有发光buff，则持续时间内伤害减免10%
 public class Auviotre extends CurioBaseBlockItem {
 
     public Auviotre(Block block, Properties properties) {

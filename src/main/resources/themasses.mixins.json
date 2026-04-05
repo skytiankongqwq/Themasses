@@ -6,11 +6,8 @@
   "refmap": "themasses.mixins.refmap.json",
   "mixins": [
     "food",
-    "PigMixin",
     "MobMixin",
     "EnderManMixin",
-    "HeishatangAccessors$LivingEntityAccessor",
-    "HeishatangAccessors$VillagerAccessor",
     "buff.LivingEntityMixin",
     "BossTagMixin",
     "prop.Player7Mixin",

@@ -40,17 +40,17 @@ public class Playerseven extends Item implements ICurio {
         super(properties);
     }
 
-    // --- 1. 按键触发 (在 Packet 中调用此方法) ---
     public static void triggerAbility(ServerPlayer player) {
         long currentTime = player.level().getGameTime();
         CompoundTag data = player.getPersistentData();
 
-        // --- CD 判定 ( 2400 ticks) ---
+        // --- CD 判定 (2400 ticks) ---
         if (data.contains("P7_Ability_CD")) {
             long lastUsed = data.getLong("P7_Ability_CD");
             if (currentTime - lastUsed < 2400) {
                 long remainingSec = (2400 - (currentTime - lastUsed)) / 20;
-                player.sendSystemMessage(Component.literal("§c技能冷却中... 剩余 " + remainingSec + " 秒"));
+                // 改为 displayClientMessage(..., true)
+                player.displayClientMessage(Component.literal("§c技能冷却中... 剩余 " + remainingSec + " 秒"), true);
                 return;
             }
         }
@@ -59,29 +59,30 @@ public class Playerseven extends Item implements ICurio {
 
         // 0-8000: 晨曦之力 (6:00 - 14:00)
         if (timeOfDay >= 0 && timeOfDay < 8000) {
-            // 判定是否有雨 (下雨或雷雨)
             boolean isRaining = player.level().isRaining() || player.level().isThundering();
-            // 有雨3分钟(3600t)，无雨1分钟(1200t)
             int duration = isRaining ? 3600 : 1200;
 
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, duration, 9)); // 10级Buff (等级从0开始算)
-            player.sendSystemMessage(Component.literal("§e黎明之幕开启，破碎的躯壳在初阳中重构..." +
-                    (isRaining ? "§f万物在雨中狂欢，蓬勃的生命力正破土而出！" : "§f伤口极速愈合中...")));
+            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, duration, 9));
+
+            // 拼接提示词并显示在中间
+            String subText = isRaining ? "§f万物在雨中狂欢，蓬勃的生命力正破土而出！" : "§f伤口极速愈合中...";
+            player.displayClientMessage(Component.literal("§e黎明之幕开启，破碎的躯壳在初阳中重构... " + subText), true);
         }
 
         // 8000-16000: 正午之炎 (14:00 - 22:00)
         else if (timeOfDay >= 8000 && timeOfDay < 16000) {
-            // 设置 1 分钟 (1200t) 的计时器
             data.putInt("P7_NoonFire", 1200);
-            player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 1200, 9)); // 10级抗火
-            player.sendSystemMessage(Component.literal("此刃将焚尽世间诸恶！"));
+            player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 1200, 9));
+
+            player.displayClientMessage(Component.literal("§6此刃将焚尽世间诸恶！"), true);
         }
 
         // 16000-24000: 夜月之华 (22:00 - 6:00)
         else {
-            player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 3600, 9)); // 夜视3分钟
-            player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 1200, 9)); // 隐身1分钟
-            player.sendSystemMessage(Component.literal("身形隐于寂灭月影..."));
+            player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 3600, 9));
+            player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 1200, 9));
+
+            player.displayClientMessage(Component.literal("§b身形隐于寂灭月影..."), true);
         }
 
         // 更新 CD 记录

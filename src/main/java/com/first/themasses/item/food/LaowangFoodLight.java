@@ -54,8 +54,6 @@ public class LaowangFoodLight extends Item {
             }
         }
 
-
-
         return pStack;
     }
 }

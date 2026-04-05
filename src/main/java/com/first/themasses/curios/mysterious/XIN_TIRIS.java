@@ -97,37 +97,53 @@ public class XIN_TIRIS extends Item {
      * 主动技能逻辑：由 PacketAbilityKey 调用 (-444)
      */
     public static void executeXINTirisSkill(ServerPlayer player) {
+        // 1. 获取饰品槽位
+        var curioStackOpt = top.theillusivec4.curios.api.CuriosApi.getCuriosHelper()
+                .findFirstCurio(player, stack -> stack.getItem() instanceof XIN_TIRIS);
+
+        if (curioStackOpt.isEmpty()) return;
+
+        Item curioItem = curioStackOpt.get().stack().getItem();
+        // 修正：正确的类名是 ItemCooldowns
+        net.minecraft.world.item.ItemCooldowns tracker = player.getCooldowns();
+
+        // 2. 检查冷却并计算精确秒数
+        if (tracker.isOnCooldown(curioItem)) {
+            // 获取冷却进度 (1.0 为刚开始，0.0 为结束)
+            float progress = tracker.getCooldownPercent(curioItem, 0.0F);
+
+            // 总时间 360秒 (7200 ticks)
+            int totalTicks = 7200;
+            int remainingTicks = Math.round(progress * totalTicks);
+            int remainingSeconds = remainingTicks / 20;
+
+            player.displayClientMessage(Component.literal("技能冷却中... 剩余 " + remainingSeconds + " 秒")
+                    .withStyle(ChatFormatting.RED), true);
+            return;
+        }
+
+        // --- 技能逻辑开始 ---
         Level level = player.level();
         Vec3 look = player.getLookAngle();
-        Vec3 start = player.getEyePosition();
-
-        // 定义前方 6 格的 AABB 范围
         AABB area = player.getBoundingBox().expandTowards(look.scale(6.0)).inflate(1.5);
         List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area);
 
         for (LivingEntity target : targets) {
             if (target == player) continue;
 
-            // 1. 计算体力差 (当前血量差值)
             float healthDiff = Math.abs(player.getHealth() - target.getHealth());
-
-            // 2. 获取玩家基础攻击力
             float baseAtk = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
 
-            // 3. 判定：如果血量差 < 基础攻击力，获得 60s 100% 穿透 (需自定义效果)
-            if (healthDiff < baseAtk) {
-                // 这里的 ModEffects.PENETRATION 需要你已经在效果类中注册
-                // player.addEffect(new MobEffectInstance(ModEffects.PENETRATION.get(), 1200, 0));
-            }
 
-            // 4. 造成伤害 (来源设为玩家攻击)
             target.hurt(player.damageSources().playerAttack(player), healthDiff);
 
-            // 5. 视觉反馈
             if (level instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK, target.getX(), target.getY() + 1, target.getZ(), 1, 0, 0, 0, 0);
             }
         }
+
+        // 3. 触发 360 秒冷却
+        tracker.addCooldown(curioItem, 7200);
     }
 
     @Override

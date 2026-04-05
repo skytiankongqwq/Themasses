@@ -81,9 +81,5 @@ public class Duvacein extends Item implements ICurioItem {
                 .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x00AAAA)));
 
         tooltip.add(line1);
-
-        // 额外提示（可选）
-        tooltip.add(Component.literal("§8[幽密体] §7在周围布下幽匿陷阱"));
-        tooltip.add(Component.literal("§8[点金手] §7右键金块传播黄金感染"));
     }
 }
