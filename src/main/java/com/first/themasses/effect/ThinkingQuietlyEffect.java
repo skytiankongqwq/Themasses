@@ -17,7 +17,7 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID)
 public class ThinkingQuietlyEffect extends MobEffect {
 
-    public ThinkingQuietlyEffect() {
+    public ThinkingQuietlyEffect(MobEffectCategory harmful) {
         super(MobEffectCategory.BENEFICIAL, 0xFFD700);
     }
 

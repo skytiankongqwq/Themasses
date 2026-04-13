@@ -8,6 +8,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -88,33 +89,51 @@ public class heishatangring extends Item {
                         updateAttributes(player, mode);
                     }
 
-                    // 2. 磁场逻辑 (必须在服务端运行，防止实体回弹)
+                    // 2. 磁场逻辑 (必须在服务端运行)
                     if (!player.level().isClientSide) {
                         CompoundTag itemNbt = stack.getOrCreateTag();
                         int magnet = itemNbt.getInt("MagnetMode");
+
                         if (magnet > 0) {
                             double targetRange = 2.0;
-                            List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class,
-                                    player.getBoundingBox().inflate(8.0), e -> e != player && e.isAlive());
+                            // 核心改动：搜索所有 Entity，排除掉落物 (ItemEntity) 和 玩家自己
+                            List<Entity> targets = player.level().getEntities(player,
+                                    player.getBoundingBox().inflate(8.0),
+                                    e -> !(e instanceof net.minecraft.world.entity.item.ItemEntity) && e.isAlive());
 
-                            for (LivingEntity target : targets) {
+                            for (Entity target : targets) {
                                 Vec3 targetPos = target.position();
                                 Vec3 playerPos = player.position();
                                 double dist = playerPos.distanceTo(targetPos);
+
+                                // 计算从目标指向玩家的向量 (吸附向量)
                                 Vec3 motionVec = playerPos.subtract(targetPos).normalize();
 
-                                if (magnet == 1) { // 吸附模式 (带 2 格停顿逻辑)
+                                if (magnet == 1) { // --- 吸附模式 ---
                                     if (dist > targetRange + 0.5) {
-                                        target.setDeltaMovement(target.getDeltaMovement().add(motionVec.scale(0.15)));
+                                        // 增加吸力
+                                        target.setDeltaMovement(target.getDeltaMovement().add(motionVec.scale(0.18)));
                                     } else if (dist < targetRange - 0.2) {
-                                        target.setDeltaMovement(target.getDeltaMovement().add(motionVec.scale(-0.1)));
+                                        // 太近了，轻微推开
+                                        target.setDeltaMovement(target.getDeltaMovement().add(motionVec.scale(-0.12)));
                                     } else {
-                                        target.setDeltaMovement(target.getDeltaMovement().multiply(0.5, 1, 0.5));
+                                        // 进入 2 格平衡区，减缓其原有动能
+                                        target.setDeltaMovement(target.getDeltaMovement().multiply(0.6, 1, 0.6));
                                     }
-                                } else { // 排斥模式
-                                    target.setDeltaMovement(target.getDeltaMovement().add(motionVec.scale(-0.25)));
+                                } else { // --- 排斥模式 ---
+                                    // 增强排斥力，确保能弹开高速飞行的箭矢
+                                    target.setDeltaMovement(target.getDeltaMovement().add(motionVec.scale(-0.35)));
                                 }
-                                target.hurtMarked = true; // 强制服务端同步位移给客户端
+
+                                // 关键：非生物实体（如箭矢）必须设置这个，否则客户端位置不会更新
+                                target.hurtMarked = true;
+
+                                // 特殊处理：如果是弹射物（箭矢、火球等），修改其朝向以匹配新速度
+                                if (target instanceof net.minecraft.world.entity.projectile.Projectile projectile) {
+                                    Vec3 velocity = target.getDeltaMovement();
+                                    target.setYRot((float)(Math.atan2(velocity.x, velocity.z) * (180D / Math.PI)));
+                                    target.setXRot((float)(Math.atan2(velocity.y, velocity.horizontalDistance()) * (180D / Math.PI)));
+                                }
                             }
                         }
                     }
@@ -150,8 +169,8 @@ public class heishatangring extends Item {
     }
 
     private void updateAttributes(Player player, int mode) {
-        modifyAttr(player, ForgeMod.BLOCK_REACH.get(), REACH_UUID, "ReachMod", (mode == 1 ? 5.0 : 0.0));
-        modifyAttr(player, ForgeMod.ENTITY_REACH.get(), REACH_UUID, "AtkReachMod", (mode == 1 ? 5.0 : 0.0));
+        modifyAttr(player, ForgeMod.BLOCK_REACH.get(), REACH_UUID, "ReachMod", (mode == 1 ? 10.0 : 0.0));
+        modifyAttr(player, ForgeMod.ENTITY_REACH.get(), REACH_UUID, "AtkReachMod", (mode == 1 ? 10.0 : 0.0));
         modifyAttr(player, Attributes.MOVEMENT_SPEED, SPEED_UUID, "SpeedMod", (mode == 2 ? 0.4 : 0.0));
         modifyAttr(player, Attributes.ATTACK_DAMAGE, DAMAGE_UUID, "DmgMod", (mode == 3 ? 10.0 : 0.0));
         modifyAttr(player, Attributes.ATTACK_KNOCKBACK, DAMAGE_UUID, "KbkMod", (mode == 3 ? 50.0 : 0.0));

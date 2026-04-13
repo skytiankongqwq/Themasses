@@ -2,15 +2,13 @@ package com.first.themasses.Client;
 
 import com.first.themasses.Client.entity.SmallFireBallRenderer;
 import com.first.themasses.Client.modle.itemModel;
+import com.first.themasses.Client.entity.VoidPiercerProjectileRenderer;
 import com.first.themasses.entity.ModEntities;
 import com.first.themasses.TheMasses;
 import net.minecraft.client.renderer.entity.CreeperRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
@@ -31,25 +29,43 @@ public class ModClientEvents {
 
     @SubscribeEvent
     public static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
-        // 强制要求游戏加载这个 2D JSON，否则在 bake 事件里拿不到它
+        // 1. 万魂幡的 2D 模型
         event.register(new ModelResourceLocation(TheMasses.MOD_ID, "soul_banner_item", "inventory"));
+        // 2. 紫檀花的 2D GUI 模型 (16x16)
+        event.register(new ModelResourceLocation(TheMasses.MOD_ID, "zitanhua_gui", "inventory"));
     }
 
     @SubscribeEvent
     public static void onModelBake(ModelEvent.ModifyBakingResult event) {
-        // 这里的 path 必须对应 assets/themasses/models/item/soul_banner.json
-        ModelResourceLocation soulBannerLoc = new ModelResourceLocation(TheMasses.MOD_ID, "soul_banner", "inventory");
-        ModelResourceLocation soulBannerGuiLoc = new ModelResourceLocation(TheMasses.MOD_ID, "soul_banner_item", "inventory");
+        // --- 处理：万魂幡 ---
+        bakeCustomModel(event, "soul_banner", "soul_banner_item");
 
-        BakedModel originalModel = event.getModels().get(soulBannerLoc);
-        BakedModel guiModel = event.getModels().get(soulBannerGuiLoc);
+        // --- 处理：紫檀花 ---
+        // 注意：这里的 "zitanhua" 必须对应你的 Item 注册名
+        bakeCustomModel(event, "zitanhua", "zitanhua_gui");
+    }
 
-        if (originalModel != null && guiModel != null) {
-            // 替换模型
-            event.getModels().put(soulBannerLoc, new itemModel(originalModel, guiModel));
+    /**
+     * 提取出的通用包装方法，减少重复代码
+     */
+    private static void bakeCustomModel(ModelEvent.ModifyBakingResult event, String baseName, String guiName) {
+        ModelResourceLocation mainLoc = new ModelResourceLocation(TheMasses.MOD_ID, baseName, "inventory");
+        ModelResourceLocation guiLoc = new ModelResourceLocation(TheMasses.MOD_ID, guiName, "inventory");
+
+        BakedModel mainModel = event.getModels().get(mainLoc);
+        BakedModel guiModel = event.getModels().get(guiLoc);
+
+        if (mainModel != null && guiModel != null) {
+            // 使用你写的 itemModel 类进行包装切换
+            event.getModels().put(mainLoc, new itemModel(mainModel, guiModel));
         } else {
-            // 如果没成功，在后台打印一下，看看到底是哪个模型没找到
-            TheMasses.LOGGER.error("模型加载失败! 3D模型: {}, 2D模型: {}", originalModel != null, guiModel != null);
+            TheMasses.LOGGER.error("模型替换失败！项目: {}, 主模型: {}, GUI模型: {}",
+                    baseName, mainModel != null, guiModel != null);
         }
+    }
+    @SubscribeEvent
+    public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        // 关键：将实体类型与你的渲染器类绑定
+        event.registerEntityRenderer(ModEntities.VOID_PIERCER_PROJECTILE.get(), VoidPiercerProjectileRenderer::new);
     }
 }

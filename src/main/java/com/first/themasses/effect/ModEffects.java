@@ -15,11 +15,13 @@ public class ModEffects {
             () -> new BamboozledDebuffEffect(MobEffectCategory.HARMFUL, 0x47C49F));
 
     public static final RegistryObject<MobEffect> THINKING_QUIETLY = MOB_EFFECTS.register("thinking_quietly",
-            () -> new ThinkingQuietlyEffect());
+            () -> new ThinkingQuietlyEffect(MobEffectCategory.HARMFUL));
 
     public static final RegistryObject<MobEffect> ONE_IDEA = MOB_EFFECTS.register("one_idea",
-            () -> new OneIdeaEffect());
+             OneIdeaEffect::new);
 
     public static final RegistryObject<MobEffect> PARADOX_VIRUS = MOB_EFFECTS.register("paradox_virus",
             ParadoxVirusEffect::new);
+    public static final RegistryObject<MobEffect> ZITANHUA = MOB_EFFECTS.register("zitanhua",
+            ZitanhuaEffect::new);
 }

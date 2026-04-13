@@ -12,6 +12,7 @@ import com.first.themasses.item.food.LaowangFoodLight;
 import com.first.themasses.item.food.SpiritLiquidVialItem;
 import com.first.themasses.item.prop.*;
 import com.first.themasses.item.sword.SoulBannerItem;
+import com.first.themasses.item.sword.VoidPiercer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -349,6 +350,18 @@ public class    ModItems {
     public static final RegistryObject<Item> ZHAOHUANSHILIANDAO = ITEMS.register(
             "zhaohuanshiliandao",
             () -> new SummonerScythe(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //铸币老王的紫昙花
+    public static final RegistryObject<Item> ZITANHUA = ITEMS.register(
+            "zitanhua",
+            () -> new VoidPiercer(new Item.Properties().stacksTo(1).defaultDurability(5152))
             {
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {

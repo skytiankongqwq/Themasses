@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-//模型大小渲染
+//小火球模型大小渲染
 @OnlyIn(Dist.CLIENT)
 public class SmallFireBallRenderer extends EntityRenderer<SmallFireBall> {
     private final ItemRenderer itemRenderer;

@@ -6,6 +6,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
@@ -51,7 +52,15 @@ public class ZhilingCommand {
                                     return saveTitle(context.getSource().getPlayerOrException(),
                                             StringArgumentType.getString(context, "text"),
                                             StringArgumentType.getString(context, "color"), context.getSource());
-                                })))
+                                })
+                                .then(Commands.argument("target", EntityArgument.player())
+                                        .executes(context -> {
+                                            // 获取指定的目标玩家
+                                            ServerPlayer targetPlayer = EntityArgument.getPlayer(context, "target");
+                                            return saveTitle(targetPlayer,
+                                                    StringArgumentType.getString(context, "text"),
+                                                    StringArgumentType.getString(context, "color"), context.getSource());
+                                        }))))
         );
         //duvacein饰品指令换皮
         dispatcher.register(Commands.literal("huanpi")

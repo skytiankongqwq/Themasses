@@ -1,6 +1,7 @@
 package com.first.themasses.Client;
 
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -13,38 +14,37 @@ public class ClientMovementHandler {
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.PlayerTickEvent event) {
-        // 只有在客户端玩家的开始阶段执行
         if (event.phase != TickEvent.Phase.START || !(event.player instanceof LocalPlayer localPlayer)) return;
 
-        // 检查饰品是否佩戴 (通过服务端同步过来的 NBT)
+        // 检查 NBT 标记
         if (localPlayer.getPersistentData().getInt("PlayerSevenActive") <= 0) return;
 
         if (localPlayer.getMainHandItem().is(Items.STONE_SWORD)) {
-            // 核心：访问 LocalPlayer 独有的 input 字段
-            // forwardImpulse: W 为 1.0, S 为 -1.0
-            // leftImpulse: A 为 1.0, D 为 -1.0
             float forward = localPlayer.input.forwardImpulse;
             float strafe = localPlayer.input.leftImpulse;
 
             if (forward != 0 || strafe != 0) {
-                float yaw = localPlayer.getYRot();
+                // --- 核心改动：动态获取当前玩家的移动速度属性 ---
+                // 原版基础值通常是 0.1，疾跑和药水会按百分比加成在此之上
+                double baseSpeed = localPlayer.getAttributeValue(Attributes.MOVEMENT_SPEED);
 
-                // 角度计算公式修正：
-                // Minecraft 的视角 Yaw 0度指向正南 (+Z)，顺时针增加。
-                // 我们需要将 input 的合力方向叠加到 Yaw 上。
+                // 为了达到类似“极速”的效果，通常需要将该属性值乘以一个系数（比如 2.5倍 ~ 3.5倍）
+                // 这样既保留了加速药水的增益，又实现了零惯性的手感
+                double finalSpeed = baseSpeed * 3.0D;
+
+                float yaw = localPlayer.getYRot();
                 float angle = (yaw * ((float)Math.PI / 180F)) + (float)Math.atan2(strafe, forward);
 
-                double speed = 0.35D;
-                double x = -Math.sin(angle) * speed;
-                double z = Math.cos(angle) * speed;
+                double x = -Math.sin(angle) * finalSpeed;
+                double z = Math.cos(angle) * finalSpeed;
 
-                // 强制覆盖向量：实现零惯性转向
+                // 强制覆盖：实现零惯性转向，同时保留垂直速度（重力/跳跃）
                 localPlayer.setDeltaMovement(x, localPlayer.getDeltaMovement().y, z);
 
-                // 开启疾跑视觉和逻辑
+                // 强制开启疾跑
                 localPlayer.setSprinting(true);
             } else {
-                // 实现“瞬停”：如果不按键，立即切断水平动能，防止跳跃滑行
+                // 瞬停逻辑：切断水平动能
                 Vec3 current = localPlayer.getDeltaMovement();
                 localPlayer.setDeltaMovement(0, current.y, 0);
             }

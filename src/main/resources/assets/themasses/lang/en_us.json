@@ -15,6 +15,7 @@
   "effect.themasses.thinking_quietly": "别动，我在思考",
   "effect.themasses.one_idea": "ei！我有一个点子",
   "effect.themasses.paradox_virus": "得见天光",
+  "effect.themasses.zitanhua": "紫昙花",
   "item.minecraft.potion.effect.bamboozled_potion": "你哪来的这玩意",
   "item.minecraft.splash_potion.effect.bamboozled_potion": "坑人药水",
   "item.minecraft.lingering_potion.effect.bamboozled_potion": "这玩意你又是哪来的(",
@@ -96,5 +97,8 @@
   "item.themasses.zhaohuanshiliandao": "召唤师镰刀",
   "tooltip.themasses.summoner.line1": "颜文字是baka",
   "item.themasses.yanwenzi": "颜文字",
-  "tooltip.themasses.yanwenzi.line1": "§b(╯°□°）╯︵ ┻━┻"
+  "tooltip.themasses.yanwenzi.line1": "§b(╯°□°）╯︵ ┻━┻",
+
+  "item.themasses.zitanhua": "紫昙花",
+  "tooltip.themasses.zitanhua.line1": "生命如阳下之昙，一次绽放一生憔悴"
 }

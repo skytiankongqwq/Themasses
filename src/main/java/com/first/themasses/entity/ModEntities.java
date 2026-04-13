@@ -1,6 +1,6 @@
 package com.first.themasses.entity;
 
-import com.first.themasses.TheMasses;
+import com.first.themasses.entity.VoidPiercerProjectileEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -31,6 +31,14 @@ public class ModEntities {
                             .clientTrackingRange(4)
                             .updateInterval(10)
                             .build("smallfire_ball"));
+    // --- 新增：虚空刺杀者投影 ---
+    public static final RegistryObject<EntityType<VoidPiercerProjectileEntity>> VOID_PIERCER_PROJECTILE =
+            ENTITY_TYPES.register("void_piercer_projectile",
+                    () -> EntityType.Builder.<VoidPiercerProjectileEntity>of(VoidPiercerProjectileEntity::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F) // 设置碰撞箱大小
+                            .clientTrackingRange(4)
+                            .updateInterval(20)
+                            .build("void_piercer_projectile"));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
