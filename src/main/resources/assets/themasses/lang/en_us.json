@@ -94,11 +94,14 @@
   "item.themasses.haozi": "Player_VI",
   "tooltip.themasses.haozi.line1": "亻尔女子，请问附近的🐷在哪",
 
-  "item.themasses.zhaohuanshiliandao": "召唤师镰刀",
-  "tooltip.themasses.summoner.line1": "颜文字是baka",
+  "item.themasses.zhaohuanshiliandao": "裁决镰刃",
+  "tooltip.themasses.summoner.line1": "从虚无之中所创造出来的镰刀。似乎是一件仿制品，不过仍然能勉强展现出曾经的用途",
   "item.themasses.yanwenzi": "颜文字",
-  "tooltip.themasses.yanwenzi.line1": "§b(╯°□°）╯︵ ┻━┻",
+  "tooltip.themasses.yanwenzi.line1": "这不是他的本体。只是一个来代替他的家伙",
 
   "item.themasses.zitanhua": "紫昙花",
-  "tooltip.themasses.zitanhua.line1": "生命如阳下之昙，一次绽放一生憔悴"
+  "tooltip.themasses.zitanhua.line1": "生命如阳下之昙，一次绽放一生憔悴",
+
+  "item.themasses.wu1wu2": "Wu1Wu2",
+  "tooltip.themasses.wu1wu2.line1": "众生的力量或许是微小的，但倘若将其汇聚，便不可忽视"
 }

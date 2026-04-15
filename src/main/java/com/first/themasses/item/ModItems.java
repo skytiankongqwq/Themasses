@@ -346,7 +346,7 @@ public class    ModItems {
                 }
             }
     );
-    //颜文字的召唤师镰刀
+    //颜文字的镰刀
     public static final RegistryObject<Item> ZHAOHUANSHILIANDAO = ITEMS.register(
             "zhaohuanshiliandao",
             () -> new SummonerScythe(new Item.Properties().stacksTo(1))
@@ -362,6 +362,18 @@ public class    ModItems {
     public static final RegistryObject<Item> ZITANHUA = ITEMS.register(
             "zitanhua",
             () -> new VoidPiercer(new Item.Properties().stacksTo(1).defaultDurability(5152))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //wu1wu2
+    public static final RegistryObject<Item> WU1WU2 = ITEMS.register(
+            "wu1wu2",
+            () -> new wu1wu2(new Item.Properties().stacksTo(1))
             {
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {

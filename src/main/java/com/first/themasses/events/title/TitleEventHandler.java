@@ -24,18 +24,20 @@ public class TitleEventHandler {
     public static void onPlayerNameFormat(PlayerEvent.NameFormat event) {
         Player player = event.getEntity();
         Component title = buildColoredTitle(player);
+        // 1. 获取名字组件（变身名或原名）
+        // 这里直接取 getHuanpiName 返回的文本组件
         Component huanpiName = getHuanpiName(player);
-
+        // 2. 如果既没头衔也没改名，直接跳过，不操作任何样式
+        if (title == null && huanpiName.equals(player.getName())) {
+            return;
+        }
         MutableComponent newName = Component.empty();
-
-        // 1. 头衔放最前面
+        // 3. 拼接头衔（头衔本身可能带有特殊颜色，这里保留）
         if (title != null) {
             newName.append(title);
+            newName.append(Component.literal(" ")); // 仅添加空格分隔
         }
-
-        // 2. 拼接名字（变身名或原名）
-        newName.append(huanpiName.copy().withStyle(ChatFormatting.GRAY));
-
+        newName.append(huanpiName);
         // 设置为新的显示名称
         event.setDisplayname(newName);
     }
@@ -68,10 +70,10 @@ public class TitleEventHandler {
         if (player.getPersistentData().contains("CustomTitle")) {
             titleText = player.getPersistentData().getString("CustomTitle");
             colorStr = player.getPersistentData().getString("CustomTitleColor");
-        } else if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.LAOWANG237.get()).isPresent()) {
-            titleText = "[baka]";
-            colorStr = "#55FFFF";
         }
+
+        if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.LAOWANG237.get()).isPresent()) {titleText = "[baka]";colorStr = "#55FFFF";}
+        if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.WU1WU2.get()).isPresent()) {titleText = "[wu1wu2]";colorStr = "＃9400D3";}
 
         if (titleText.isEmpty()) return null;
 
