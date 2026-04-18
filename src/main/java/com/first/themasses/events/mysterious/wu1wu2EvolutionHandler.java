@@ -51,7 +51,7 @@ public class wu1wu2EvolutionHandler {
 
     // 计算属性倍率：根据 N 值获取 Log2 的增长曲线
     private static double getLog2Multiplier(int n) {
-        return Math.max(1.0, Math.log(Math.max(2, n)) / Math.log(2));
+        return 0.1 * n + 0.005 * n * Math.log10(n + 1);
     }
 
     @SubscribeEvent
@@ -66,21 +66,24 @@ public class wu1wu2EvolutionHandler {
                 float multiplier = (float) getLog2Multiplier(n);
                 event.setAmount(event.getAmount() * multiplier);
                 applyEnemyDebuff(victim, n);
-                // 标记该实体，使其后续受到的所有伤害增加
                 victim.getPersistentData().putInt("SentientVulnerability", n);
             }
         }
 
-        // 2. 玩家受击时，根据 N 值提供百分比减伤
+        // 2. 玩家受击时，根据增长曲线提供减伤
         if (victim instanceof Player player && hasUnity(player)) {
             int n = wu1wu2DataManager.getPermanentN(player);
-            event.setAmount((float) (event.getAmount() * Math.pow(0.9, n)));
+            if (n > 0) {
+                double damageReduction = getLog2Multiplier(n);
+                event.setAmount((float) (event.getAmount() / (1.0 + damageReduction)));
+            }
         }
 
         // 3. 敌人身上有易伤 Tag 时，放大其受到的最终伤害
         if (victim.getPersistentData().contains("SentientVulnerability")) {
             int n = victim.getPersistentData().getInt("SentientVulnerability");
-            event.setAmount((float) (event.getAmount() * Math.pow(1.1, n)));
+            double vulnerability = getLog2Multiplier(n);
+            event.setAmount((float) (event.getAmount() * (1.0 + vulnerability)));
         }
     }
 
@@ -125,15 +128,15 @@ public class wu1wu2EvolutionHandler {
     }
 
     private static void updatePlayerAttributes(ServerPlayer player, double multiplier, int n) {
-        double targetHp = Math.min(20.0 * multiplier + n, MAX_HEALTH_LIMIT);
+        double targetHp = Math.min(20.0 * (multiplier +1.0), MAX_HEALTH_LIMIT);
         setBase(player, Attributes.MAX_HEALTH, targetHp);
-        setBase(player, Attributes.ATTACK_DAMAGE, multiplier + n);
+        setBase(player, Attributes.ATTACK_DAMAGE, multiplier +n +1);
         setBase(player, Attributes.ATTACK_SPEED, 4.0 + (n * 0.02));
         setBase(player, Attributes.ARMOR, n * 1.0);
         setBase(player, Attributes.ARMOR_TOUGHNESS, n * 1.0);
-        setBase(player, Attributes.LUCK, n * 1.0);
+        setBase(player, Attributes.LUCK, n * 1.0+1.0);
         setBase(player, Attributes.KNOCKBACK_RESISTANCE, n * 0.01);
-        applyIronsMana(player, n * 50.0);
+        applyIronsMana(player, n * 1.0);
     }
 
     private static void setBase(LivingEntity entity, Attribute attr, double value) {
@@ -158,11 +161,39 @@ public class wu1wu2EvolutionHandler {
     // 兼容 Iron's Spellbooks 法力值
     private static void applyIronsMana(Player player, double bonus) {
         try {
+            // 最大法力值
             Attribute manaAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "max_mana"));
             if (manaAttr != null) {
                 AttributeInstance inst = player.getAttribute(manaAttr);
                 if (inst != null) {
                     inst.setBaseValue(100.0 + bonus);
+                }
+            }
+
+            // 通用法术强度 (Spell Power)
+            Attribute spellPowerAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "spell_power"));
+            if (spellPowerAttr != null) {
+                AttributeInstance inst = player.getAttribute(spellPowerAttr);
+                if (inst != null) {
+                    inst.setBaseValue(bonus * 0.01 +1);
+                }
+            }
+
+            // 通用法术冷却缩减 (Cooldown Reduction)
+            Attribute cooldownAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "cooldown_reduction"));
+            if (cooldownAttr != null) {
+                AttributeInstance inst = player.getAttribute(cooldownAttr);
+                if (inst != null) {
+                    inst.setBaseValue(Math.min(bonus * 0.001 + 1, 3));
+                }
+            }
+
+            // 通用法术吟唱缩减 (Cast Time Reduction)
+            Attribute castTimeAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "cast_time_reduction"));
+            if (castTimeAttr != null) {
+                AttributeInstance inst = player.getAttribute(castTimeAttr);
+                if (inst != null) {
+                    inst.setBaseValue(Math.min(bonus * 0.001 + 1, 3));
                 }
             }
         } catch (Exception ignored) {}
