@@ -114,7 +114,6 @@ public class VoidPiercerEvents {
             }
         }
     }
-
     @SubscribeEvent
     public static void onHitEffect(LivingHurtEvent event) {
         // 第一个 player 声明已经涵盖了后续所有逻辑，不需要再次判断
@@ -123,70 +122,77 @@ public class VoidPiercerEvents {
 
         // --- 2. 攻击提升 Buff (如果是持有虚空刺杀者攻击) ---
         if (player.getMainHandItem().getItem() instanceof VoidPiercer) {
-            for (MobEffectInstance effect : victim.getActiveEffects()) {
-                if (!BuffBlacklist.isBlacklisted(effect.getEffect())) {
-                    int newDuration = effect.getDuration() + 3200;
-                    int newAmp = Math.min(effect.getAmplifier() + 1, 254);
-                    victim.addEffect(new MobEffectInstance(effect.getEffect(), newDuration, newAmp));
+            // 增加 5.152% 的概率判定
+            // player.getRandom().nextFloat() 返回 0.0 到 1.0 之间的随机数
+            if (player.getRandom().nextFloat() < 0.05152F) {
+
+                for (MobEffectInstance effect : victim.getActiveEffects()) {
+                    if (!BuffBlacklist.isBlacklisted(effect.getEffect())) {
+                        // 增加 3200 ticks (160秒) 持续时间
+                        int newDuration = effect.getDuration() + 3200;
+                        // 等级提升 1，最高不超过 255 (Amplifier 为 254)
+                        int newAmp = Math.min(effect.getAmplifier() + 1, 254);
+
+                        victim.addEffect(new MobEffectInstance(effect.getEffect(), newDuration, newAmp));
+                    }
                 }
             }
         }
     }
 
-
-    @SubscribeEvent
-    public static void onPerfectBlock(LivingHurtEvent event) {
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onPerfectBlock(LivingAttackEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
 
-        // 1. 检查是否正在使用虚空刺杀者格挡
+        // 检查是否正在使用虚空刺杀者格挡
         if (player.isUsingItem() && player.getUseItem().getItem() instanceof VoidPiercer) {
-
-            // 获取玩家已经格挡的时长 (ticks，1秒 = 20 ticks)
             int useDuration = player.getTicksUsingItem();
 
-            // 2. 判定：1秒内 (20 ticks) 为完美格挡
+            // 1. 判定：1秒内 (20 ticks) 为完美格挡
             if (useDuration > 0 && useDuration <= 20) {
-                // --- 【完美格挡逻辑】 ---
-                event.setAmount(0); // 100% 减伤
+                // --- 【取消攻击：移除动画的关键】 ---
+                event.setCanceled(true);
+
+                // 物理无敌帧，防止连携攻击
+                player.invulnerableTime = 20;
 
                 Entity attacker = event.getSource().getEntity();
                 if (attacker instanceof LivingEntity target && attacker != player) {
-                    // A. 瞬间冲刺到目标面前 (偏移 1 格防止重叠)
-                    Vec3 dashPos = target.position().add(target.getLookAngle().reverse().scale(1.0));
+                    // A. 瞬间冲刺到目标身后 (1.2格)
+                    Vec3 dashPos = target.position().add(target.getLookAngle().reverse().scale(1.2));
                     player.teleportTo(dashPos.x, dashPos.y, dashPos.z);
 
-                    // B. 瞬间伤害并挑起 (击飞)
-                    IS_DASH_HURTING.set(true); // 同样需要防递归锁
+                    // B. 反击逻辑
+                    IS_DASH_HURTING.set(true);
                     try {
-                        // 刺一下 (基础伤害)
-                        target.hurt(player.damageSources().playerAttack(player), 8.0F);
+                        // 12.0 基础伤害
+                        target.hurt(player.damageSources().playerAttack(player), 12.0F);
 
-                        // 挑起：设置向上速度 (约 0.5~0.6 对应 3 格高度)
-                        target.setDeltaMovement(target.getDeltaMovement().x, 0.65, target.getDeltaMovement().z);
-                        target.hurtMarked = true; // 强制同步给客户端
+                        // D. 挑起 (击飞)
+                        target.setDeltaMovement(target.getDeltaMovement().x, 0.75, target.getDeltaMovement().z);
+                        target.hurtMarked = true;
                     } finally {
                         IS_DASH_HURTING.set(false);
                     }
-                    player.displayClientMessage(Component.literal("§b⚡ 完美格挡：虚空反击！"), true);
+                    player.displayClientMessage(Component.literal("§b完美格挡"), true);
                 }
-            } else {
-                // --- 【普通格挡逻辑】 ---
-                // 1秒外减伤 20%
-                event.setAmount(event.getAmount() * 0.8F);
             }
         }
     }
 
+    /**
+     * 【普通格挡：减伤处理】
+     * 超过 20 ticks 后的格挡进入这里。因为完美格挡已经在 AttackEvent 取消了，
+     * 所以这里只需要处理 90% 的高额减伤。
+     */
     @SubscribeEvent
-    public static void onSneakAttack(AttackEntityEvent event) {
-        Player player = event.getEntity();
-        if (player.isShiftKeyDown() && player.getMainHandItem().getItem() instanceof VoidPiercer) {
-            Entity target = event.getTarget();
-            if (target instanceof LivingEntity livingTarget) {
-                player.teleportTo(target.getX(), target.getY() + 3.0, target.getZ());
-                player.setDeltaMovement(0, -1.5, 0);
-                // 这里建议同步改为 Action Bar 显示，效果更好
-                player.displayClientMessage(Component.literal("§d⚡ 虚空坠击！"), true);
+    public static void onNormalBlockReduction(LivingHurtEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            if (player.isUsingItem() && player.getUseItem().getItem() instanceof VoidPiercer) {
+                // 只有错过完美格挡窗口的攻击才会到达这里
+                if (player.getTicksUsingItem() > 20) {
+                    event.setAmount(event.getAmount() * 0.1F); // 90% 减伤
+                }
             }
         }
     }

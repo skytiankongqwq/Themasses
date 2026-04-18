@@ -45,7 +45,6 @@ public class    ModItems {
             });
     //老王食物
     public static final RegistryObject<Item> LAOWANG237_FOOD = ITEMS.register("laowang237_food",
-            // 💥 修正：使用匿名类扩展 LaowangFoodLight 并覆盖 getName()
             () -> new LaowangFoodLight(
                     new Item.Properties().food(ModFoods.LAOWANG_FOOD_PROPERTIES)
             ) {
@@ -73,18 +72,6 @@ public class    ModItems {
             "dazhi",
             () -> new DaZhi(new Item.Properties().stacksTo(1))
     );
-    //抗火药水饰品
-    public static final RegistryObject<Item> GREEN_HAND_POTF = ITEMS.register(
-            "green_hand_potf",
-            () -> new Kanghuoyaoshui(new Item.Properties().stacksTo(1))
-            {
-                @Override
-                public @NotNull Component getName(@NotNull ItemStack pStack) {
-                    return Component.translatable(this.getDescriptionId(pStack))
-                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
-                }
-            }
-    );
     //灵液瓶
     public static final RegistryObject<Item> SPIRIT_LIQUID_VIAL = ITEMS.register(
             "spirit_liquid_vial",
@@ -96,6 +83,18 @@ public class    ModItems {
                 public @NotNull Component getName(@NotNull ItemStack pStack) {
                     return Component.translatable(this.getDescriptionId(pStack))
                             .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFF00))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //抗火药水饰品
+    public static final RegistryObject<Item> GREEN_HAND_POTF = ITEMS.register(
+            "green_hand_potf",
+            () -> new Kanghuoyaoshui(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
                 }
             }
     );
@@ -113,7 +112,6 @@ public class    ModItems {
     );
     //伊甸禁果
     public static final RegistryObject<Item> FORBIDDEN_FRUIT_OF_EDEN = ITEMS.register("forbidden_fruit_of_eden",
-            // 💥 修正：使用匿名类扩展 LaowangFoodLight 并覆盖 getName()
             () -> new ForbiddenFruitItem(
                     new Item.Properties().food(ModFoods.FORBIDDEN_FRUIT_OF_EDEN)
             ) {
@@ -149,7 +147,6 @@ public class    ModItems {
     //万魂幡
     public static final RegistryObject<Item> SOUL_BANNER = ITEMS.register("soul_banner",
             () -> new SoulBannerItem(new Item.Properties().fireResistant()) {
-                // 让物品名字显示为深红色
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {
                     return Component.translatable(this.getDescriptionId(pStack))

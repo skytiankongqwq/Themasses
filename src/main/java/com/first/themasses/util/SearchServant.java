@@ -1,9 +1,10 @@
 package com.first.themasses.util;
 
 import com.first.themasses.TheMasses;
+import com.first.themasses.Compat.GoetyCompat; // 引入兼容类
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
@@ -11,65 +12,53 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.event.TickEvent;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SearchServant {
     private static final Map<UUID, ServantData> PLAYER_SERVANT_CACHE = new ConcurrentHashMap<>();
-    private static final Map<UUID, EnhancedServantData> ENHANCED_PLAYER_CACHE = new ConcurrentHashMap<>();
-    private static final int SCAN_INTERVAL_TICKS = 3600;
+    private static final int SCAN_INTERVAL_TICKS = 7200;
     private static int globalTickCounter = 0;
 
-    // --- 反射缓存区 ---
-    private static Class<?> IOwnedClass = null;
-    private static Method getTrueOwnerMethod = null;
+    private static volatile boolean isScanning = false;
+    private static Iterator<ServerLevel> levelIterator = null;
+    private static Iterator<LivingEntity> entityIterator = null;
+    private static ServerLevel currentLevel = null;
+    private static Map<UUID, Set<UUID>> scanningPlayerServants = new HashMap<>();
 
-    static {
-        try {
-            // 动态加载类，如果不存在会抛出异常并被捕获
-            IOwnedClass = Class.forName("com.Polarice3.Goety.api.entities.IOwned");
-            getTrueOwnerMethod = IOwnedClass.getMethod("getTrueOwner");
-        } catch (Exception ignored) {
-            // 说明没有安装 Goety 模组，相关变量保持 null
+    // ==========================================
+    // 兼容性辅助方法：安全地获取实体主人
+    // ==========================================
+    private static UUID getEntityOwnerUUID(LivingEntity livingEntity) {
+        if (livingEntity instanceof OwnableEntity ownableEntity) {
+            return ownableEntity.getOwnerUUID();
         }
-    }
-
-    /**
-     * 通用的所有者检测工具，支持原版 Ownable 和 Goety 反射
-     */
-    private static LivingEntity getEntityOwner(LivingEntity entity) {
-        if (entity == null) return null;
-
-        // 1. 尝试原版 OwnableEntity (使用 Entity 变量过渡，避开 IDE 冗余警告)
-        if (entity instanceof OwnableEntity ownable) {
-            Entity ownerEntity = ownable.getOwner();
-            if (ownerEntity instanceof LivingEntity livingOwner) {
-                return livingOwner;
-            }
-        }
-
-        // 2. 尝试反射调用 Goety (保持不变)
-        if (IOwnedClass != null && IOwnedClass.isInstance(entity)) {
-            try {
-                Object owner = getTrueOwnerMethod.invoke(entity);
-                if (owner instanceof LivingEntity livingOwner) {
-                    return livingOwner;
-                }
-            } catch (Exception e) {
-                // 静默处理反射异常
-            }
+        if (ModList.get().isLoaded("goety")) {
+            return GoetyCompat.getGoetyOwnerUUID(livingEntity);
         }
         return null;
     }
 
-    // --- 数据内部类 (保持原样) ---
+    private static Player getEntityOwnerPlayer(LivingEntity livingEntity) {
+        if (livingEntity instanceof OwnableEntity ownableEntity) {
+            UUID ownerUUID = ownableEntity.getOwnerUUID();
+            if (ownerUUID != null && livingEntity.level().getPlayerByUUID(ownerUUID) != null) {
+                return livingEntity.level().getPlayerByUUID(ownerUUID);
+            }
+        }
+        if (ModList.get().isLoaded("goety")) {
+            return GoetyCompat.getGoetyOwnerPlayer(livingEntity);
+        }
+        return null;
+    }
 
     public static class ServantData {
         public final UUID playerUUID;
@@ -80,14 +69,29 @@ public class SearchServant {
         public ServantData(UUID playerUUID) {
             this.playerUUID = playerUUID;
             this.servantUUIDs = new HashSet<>();
-            this.maxServants = 256;
+            this.maxServants = 512;
             this.lastScanTick = 0;
         }
 
-        public void addServant(UUID servantUUID) { servantUUIDs.add(servantUUID); }
-        public void removeServant(UUID servantUUID) { servantUUIDs.remove(servantUUID); }
-        public void clear() { servantUUIDs.clear(); }
-        public int getServantCount() { return servantUUIDs.size(); }
+        public void addServant(UUID servantUUID) {
+            servantUUIDs.add(servantUUID);
+        }
+
+        public void removeServant(UUID servantUUID) {
+            servantUUIDs.remove(servantUUID);
+        }
+
+        public boolean hasServant(UUID servantUUID) {
+            return servantUUIDs.contains(servantUUID);
+        }
+
+        public int getServantCount() {
+            return servantUUIDs.size();
+        }
+
+        public void clear() {
+            servantUUIDs.clear();
+        }
     }
 
     public static class ServantDetailData {
@@ -120,12 +124,35 @@ public class SearchServant {
             public ItemStack offHand = ItemStack.EMPTY;
 
             public void updateFromEntity(LivingEntity entity) {
-                this.helmet = entity.getItemBySlot(EquipmentSlot.HEAD).copy();
-                this.chestplate = entity.getItemBySlot(EquipmentSlot.CHEST).copy();
-                this.leggings = entity.getItemBySlot(EquipmentSlot.LEGS).copy();
-                this.boots = entity.getItemBySlot(EquipmentSlot.FEET).copy();
-                this.mainHand = entity.getMainHandItem().copy();
-                this.offHand = entity.getOffhandItem().copy();
+                ItemStack newHelmet = entity.getItemBySlot(EquipmentSlot.HEAD);
+                if (!ItemStack.matches(this.helmet, newHelmet)) {
+                    this.helmet = newHelmet.copy();
+                }
+
+                ItemStack newChestplate = entity.getItemBySlot(EquipmentSlot.CHEST);
+                if (!ItemStack.matches(this.chestplate, newChestplate)) {
+                    this.chestplate = newChestplate.copy();
+                }
+
+                ItemStack newLeggings = entity.getItemBySlot(EquipmentSlot.LEGS);
+                if (!ItemStack.matches(this.leggings, newLeggings)) {
+                    this.leggings = newLeggings.copy();
+                }
+
+                ItemStack newBoots = entity.getItemBySlot(EquipmentSlot.FEET);
+                if (!ItemStack.matches(this.boots, newBoots)) {
+                    this.boots = newBoots.copy();
+                }
+
+                ItemStack newMainHand = entity.getMainHandItem();
+                if (!ItemStack.matches(this.mainHand, newMainHand)) {
+                    this.mainHand = newMainHand.copy();
+                }
+
+                ItemStack newOffHand = entity.getOffhandItem();
+                if (!ItemStack.matches(this.offHand, newOffHand)) {
+                    this.offHand = newOffHand.copy();
+                }
             }
 
             public Map<String, Object> toMap() {
@@ -140,10 +167,14 @@ public class SearchServant {
             }
 
             private Map<String, Object> serializeItemStack(ItemStack stack) {
-                if (stack.isEmpty()) return null;
+                if (stack.isEmpty()) {
+                    return null;
+                }
                 Map<String, Object> itemData = new HashMap<>();
                 itemData.put("item", stack.getItem().toString());
                 itemData.put("count", stack.getCount());
+                itemData.put("damage", stack.getDamageValue());
+                itemData.put("maxDamage", stack.getMaxDamage());
                 return itemData;
             }
         }
@@ -152,17 +183,37 @@ public class SearchServant {
             public double maxHealth;
             public double currentHealth;
             public double attackDamage;
+            public double armor;
+            public double movementSpeed;
+            public double knockbackResistance;
+
             public void updateFromEntity(LivingEntity entity) {
                 this.currentHealth = entity.getHealth();
-                this.maxHealth = entity.getMaxHealth();
-                AttributeInstance inst = entity.getAttribute(Attributes.ATTACK_DAMAGE);
-                this.attackDamage = inst != null ? inst.getValue() : 0;
+                this.maxHealth = getMaxAttributeValue(entity, Attributes.MAX_HEALTH);
+                this.attackDamage = getBaseAttributeValue(entity, Attributes.ATTACK_DAMAGE);
+                this.armor = getBaseAttributeValue(entity, Attributes.ARMOR);
+                this.movementSpeed = getBaseAttributeValue(entity, Attributes.MOVEMENT_SPEED);
+                this.knockbackResistance = getBaseAttributeValue(entity, Attributes.KNOCKBACK_RESISTANCE);
             }
+
+            private double getBaseAttributeValue(LivingEntity entity, net.minecraft.world.entity.ai.attributes.Attribute attribute) {
+                AttributeInstance instance = entity.getAttribute(attribute);
+                return instance != null ? instance.getBaseValue() : 0.0;
+            }
+
+            private double getMaxAttributeValue(LivingEntity entity, net.minecraft.world.entity.ai.attributes.Attribute attribute) {
+                AttributeInstance instance = entity.getAttribute(attribute);
+                return instance != null ? instance.getValue() : 0.0;
+            }
+
             public Map<String, Double> toMap() {
                 Map<String, Double> map = new HashMap<>();
                 map.put("maxHealth", maxHealth);
                 map.put("currentHealth", currentHealth);
                 map.put("attackDamage", attackDamage);
+                map.put("armor", armor);
+                map.put("movementSpeed", movementSpeed);
+                map.put("knockbackResistance", knockbackResistance);
                 return map;
             }
         }
@@ -181,22 +232,61 @@ public class SearchServant {
     public static class EnhancedServantData {
         public final UUID playerUUID;
         public final Map<UUID, ServantDetailData> servantDetails;
+        public int maxServants;
+        public int lastScanTick;
 
         public EnhancedServantData(UUID playerUUID) {
             this.playerUUID = playerUUID;
             this.servantDetails = new ConcurrentHashMap<>();
+            this.maxServants = 100;
+            this.lastScanTick = 0;
         }
 
         public void addOrUpdateServant(LivingEntity entity) {
-            ServantDetailData detail = servantDetails.computeIfAbsent(entity.getUUID(), ServantDetailData::new);
+            ServantDetailData detail = servantDetails.computeIfAbsent(
+                    entity.getUUID(),
+                    uuid -> new ServantDetailData(uuid)
+            );
             detail.updateFromEntity(entity);
         }
 
-        public void removeServant(UUID servantUUID) { servantDetails.remove(servantUUID); }
-        public void clear() { servantDetails.clear(); }
+        public void removeServant(UUID servantUUID) {
+            servantDetails.remove(servantUUID);
+        }
+
+        public Optional<ServantDetailData> getServantDetail(UUID servantUUID) {
+            return Optional.ofNullable(servantDetails.get(servantUUID));
+        }
+
+        public Collection<ServantDetailData> getAllServantDetails() {
+            return Collections.unmodifiableCollection(servantDetails.values());
+        }
+
+        public int getServantCount() {
+            return servantDetails.size();
+        }
+
+        public void clear() {
+            servantDetails.clear();
+        }
+
+        public Map<String, Object> toMap() {
+            Map<String, Object> map = new HashMap<>();
+            map.put("playerUUID", playerUUID.toString());
+            map.put("maxServants", maxServants);
+            map.put("lastScanTick", lastScanTick);
+
+            List<Map<String, Object>> servantsList = new ArrayList<>();
+            for (ServantDetailData detail : servantDetails.values()) {
+                servantsList.add(detail.toMap());
+            }
+            map.put("servants", servantsList);
+
+            return map;
+        }
     }
 
-    // --- 逻辑方法 ---
+    private static final Map<UUID, EnhancedServantData> ENHANCED_PLAYER_CACHE = new ConcurrentHashMap<>();
 
     public static Optional<EnhancedServantData> getEnhancedServantData(Player player) {
         return Optional.ofNullable(ENHANCED_PLAYER_CACHE.get(player.getUUID()));
@@ -206,45 +296,176 @@ public class SearchServant {
         return Optional.ofNullable(PLAYER_SERVANT_CACHE.get(player.getUUID()));
     }
 
-    public static void scanServantsForPlayer(ServerLevel level, ServerPlayer player) {
+    public static void scanServantsForPlayer(MinecraftServer server, ServerPlayer player) {
         ServantData data = PLAYER_SERVANT_CACHE.computeIfAbsent(player.getUUID(), ServantData::new);
         EnhancedServantData enhancedData = ENHANCED_PLAYER_CACHE.computeIfAbsent(player.getUUID(), EnhancedServantData::new);
 
-        data.clear();
-        enhancedData.clear();
+        Set<UUID> currentServants = new HashSet<>();
 
-        for (Entity entity : level.getAllEntities()) {
-            if (entity instanceof LivingEntity livingEntity) {
-                LivingEntity owner = getEntityOwner(livingEntity);
-                if (owner != null && owner.getUUID().equals(player.getUUID())) {
+        for (ServerLevel level : server.getAllLevels()) {
+            List<LivingEntity> entities = level.getEntitiesOfClass(
+                    LivingEntity.class,
+                    net.minecraft.world.phys.AABB.ofSize(player.position(), 100, 100, 100),
+                    entity -> true
+            );
+
+            for (LivingEntity livingEntity : entities) {
+                // 使用隔离好的方法获取所有者
+                UUID ownerUUID = getEntityOwnerUUID(livingEntity);
+
+                if (ownerUUID != null && ownerUUID.equals(player.getUUID())) {
+                    currentServants.add(livingEntity.getUUID());
+
+                    if (!data.hasServant(livingEntity.getUUID())) {
+                        data.addServant(livingEntity.getUUID());
+                        enhancedData.addOrUpdateServant(livingEntity);
+                    } else {
+                        enhancedData.addOrUpdateServant(livingEntity);
+                    }
+                }
+            }
+        }
+
+        Set<UUID> removedServants = new HashSet<>(data.servantUUIDs);
+        removedServants.removeAll(currentServants);
+
+        for (UUID removedUUID : removedServants) {
+            data.removeServant(removedUUID);
+            enhancedData.removeServant(removedUUID);
+        }
+
+        data.lastScanTick = globalTickCounter;
+        enhancedData.lastScanTick = globalTickCounter;
+    }
+
+    public static void scanAllPlayersOptimized(MinecraftServer server) {
+        if (isScanning) {
+            return;
+        }
+
+        isScanning = true;
+        List<ServerLevel> levels = new ArrayList<>();
+        for (ServerLevel level : server.getAllLevels()) {
+            levels.add(level);
+        }
+        levelIterator = levels.iterator();
+        scanningPlayerServants = new HashMap<>();
+
+        processNextFrame();
+    }
+
+    private static void processNextFrame() {
+        if (levelIterator == null || !levelIterator.hasNext()) {
+            finishScanning();
+            return;
+        }
+
+        if (currentLevel == null) {
+            currentLevel = levelIterator.next();
+            List<LivingEntity> entities = currentLevel.getEntitiesOfClass(
+                    LivingEntity.class,
+                    net.minecraft.world.phys.AABB.ofSize(Vec3.ZERO, 30000000, 30000000, 30000000),
+                    entity -> true
+            );
+            entityIterator = entities.iterator();
+        }
+
+        int processedCount = 0;
+        int maxPerFrame = 500;
+
+        while (entityIterator != null && entityIterator.hasNext() && processedCount < maxPerFrame) {
+            LivingEntity livingEntity = entityIterator.next();
+            processedCount++;
+
+            // 使用隔离好的方法获取所有者
+            UUID ownerUUID = getEntityOwnerUUID(livingEntity);
+
+            if (ownerUUID != null) {
+                scanningPlayerServants.computeIfAbsent(ownerUUID, k -> new HashSet<>())
+                        .add(livingEntity.getUUID());
+
+                ServantData data = PLAYER_SERVANT_CACHE.computeIfAbsent(ownerUUID, ServantData::new);
+                EnhancedServantData enhancedData = ENHANCED_PLAYER_CACHE.computeIfAbsent(ownerUUID, EnhancedServantData::new);
+
+                if (!data.hasServant(livingEntity.getUUID())) {
                     data.addServant(livingEntity.getUUID());
+                    enhancedData.addOrUpdateServant(livingEntity);
+                } else {
                     enhancedData.addOrUpdateServant(livingEntity);
                 }
             }
         }
-        data.lastScanTick = globalTickCounter;
+
+        if (entityIterator == null || !entityIterator.hasNext()) {
+            currentLevel = null;
+            entityIterator = null;
+        }
     }
 
-    public static void scanAllPlayers(ServerLevel level) {
-        for (ServerPlayer player : level.players()) {
-            scanServantsForPlayer(level, player);
+    private static void finishScanning() {
+        for (Map.Entry<UUID, Set<UUID>> entry : scanningPlayerServants.entrySet()) {
+            UUID playerUUID = entry.getKey();
+            Set<UUID> currentServants = entry.getValue();
+
+            ServantData data = PLAYER_SERVANT_CACHE.get(playerUUID);
+            EnhancedServantData enhancedData = ENHANCED_PLAYER_CACHE.get(playerUUID);
+
+            if (data != null && enhancedData != null) {
+                Set<UUID> removedServants = new HashSet<>(data.servantUUIDs);
+                removedServants.removeAll(currentServants);
+
+                for (UUID removedUUID : removedServants) {
+                    data.removeServant(removedUUID);
+                    enhancedData.removeServant(removedUUID);
+                }
+
+                data.lastScanTick = globalTickCounter;
+                enhancedData.lastScanTick = globalTickCounter;
+            }
+        }
+
+        isScanning = false;
+        levelIterator = null;
+        currentLevel = null;
+        entityIterator = null;
+        scanningPlayerServants.clear();
+    }
+
+
+    public static void scanAllPlayers(MinecraftServer server) {
+        for (ServerLevel level : server.getAllLevels()) {
+            for (ServerPlayer player : level.players()) {
+                scanServantsForPlayer(server, player);
+            }
         }
     }
 
     public static void onServantJoin(Player player, LivingEntity servant) {
-        PLAYER_SERVANT_CACHE.computeIfAbsent(player.getUUID(), ServantData::new).addServant(servant.getUUID());
-        ENHANCED_PLAYER_CACHE.computeIfAbsent(player.getUUID(), EnhancedServantData::new).addOrUpdateServant(servant);
+        getServantData(player).ifPresent(data -> {
+            data.addServant(servant.getUUID());
+        });
+
+        getEnhancedServantData(player).ifPresent(data -> {
+            data.addOrUpdateServant(servant);
+        });
     }
 
     public static void onServantDeath(Player player, UUID servantUUID) {
-        getServantData(player).ifPresent(data -> data.removeServant(servantUUID));
-        getEnhancedServantData(player).ifPresent(data -> data.removeServant(servantUUID));
+        getServantData(player).ifPresent(data -> {
+            data.removeServant(servantUUID);
+        });
+
+        getEnhancedServantData(player).ifPresent(data -> {
+            data.removeServant(servantUUID);
+        });
     }
 
     public static void updateServantData(LivingEntity servant) {
-        LivingEntity owner = getEntityOwner(servant);
-        if (owner instanceof Player ownerPlayer) {
-            getEnhancedServantData(ownerPlayer).ifPresent(data -> data.addOrUpdateServant(servant));
+        Player ownerPlayer = getEntityOwnerPlayer(servant);
+        if (ownerPlayer != null) {
+            getEnhancedServantData(ownerPlayer).ifPresent(data -> {
+                data.addOrUpdateServant(servant);
+            });
         }
     }
 
@@ -254,51 +475,49 @@ public class SearchServant {
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase != TickEvent.Phase.START) return;
+
             globalTickCounter++;
-            if (globalTickCounter % SCAN_INTERVAL_TICKS == 0) {
-                for (ServerLevel level : event.getServer().getAllLevels()) {
-                    scanAllPlayers(level);
-                }
+
+            if (isScanning) {
+                processNextFrame();
+            } else if (globalTickCounter % SCAN_INTERVAL_TICKS == 0) {
+                scanAllPlayersOptimized(event.getServer());
             }
         }
 
         @SubscribeEvent
         public static void onPlayerLoggedIn(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) {
             if (!event.getEntity().level().isClientSide() && event.getEntity() instanceof ServerPlayer player) {
-                scanServantsForPlayer((ServerLevel) player.level(), player);
+                scanAllPlayersOptimized(player.getServer());
             }
         }
 
         @SubscribeEvent
+        public static void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+            PLAYER_SERVANT_CACHE.remove(event.getEntity().getUUID());
+            ENHANCED_PLAYER_CACHE.remove(event.getEntity().getUUID());
+        }
+
+        @SubscribeEvent
         public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-            if (event.getLevel().isClientSide() || !(event.getEntity() instanceof LivingEntity living)) return;
-            LivingEntity owner = getEntityOwner(living);
-            if (owner instanceof Player p) onServantJoin(p, living);
+            if (event.getLevel().isClientSide() || !(event.getEntity() instanceof LivingEntity livingEntity)) {
+                return;
+            }
+
+            Player ownerPlayer = getEntityOwnerPlayer(livingEntity);
+            if (ownerPlayer != null) {
+                onServantJoin(ownerPlayer, livingEntity);
+            }
         }
 
         @SubscribeEvent
         public static void onLivingDeath(LivingDeathEvent event) {
             if (event.getEntity().level().isClientSide()) return;
-            LivingEntity owner = getEntityOwner(event.getEntity());
-            if (owner instanceof Player p) onServantDeath(p, event.getEntity().getUUID());
-        }
 
-        @SubscribeEvent
-        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-            if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) return;
-            if (event.player instanceof ServerPlayer player) {
-                // 仅每秒更新一次，减轻全实体扫描压力
-                if (player.level().getGameTime() % 20 == 0) {
-                    ServerLevel level = (ServerLevel) player.level();
-                    for (Entity entity : level.getAllEntities()) {
-                        if (entity instanceof LivingEntity living) {
-                            LivingEntity owner = getEntityOwner(living);
-                            if (owner == player) {
-                                updateServantData(living);
-                            }
-                        }
-                    }
-                }
+            LivingEntity deadEntity = event.getEntity();
+            Player ownerPlayer = getEntityOwnerPlayer(deadEntity);
+            if (ownerPlayer != null) {
+                onServantDeath(ownerPlayer, deadEntity.getUUID());
             }
         }
     }

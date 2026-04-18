@@ -48,7 +48,10 @@ public class giveitem {
             new PlayerReward(UUID.fromString("0e011c0b-a796-4ec9-9bdb-a225d2d1db6d"), ModItems.BAI_ZE_LI, 1),
             new PlayerReward(UUID.fromString("0088c328-bbc2-4b70-bd66-5e0f512f5eee"), ModItems.DUVACEIN, 1),
             new PlayerReward(UUID.fromString("40f094c1-c795-415b-9bba-127e9cdb64d5"), ModItems.XIN_TIRIS, 1),
-            new PlayerReward(UUID.fromString("514354df-6166-4bd7-9382-7757d3c008a6"), ModItems.HAOZI, 1)
+            new PlayerReward(UUID.fromString("514354df-6166-4bd7-9382-7757d3c008a6"), ModItems.HAOZI, 1),
+            new PlayerReward(UUID.fromString("dcd88045-2e14-4571-acfe-f2093ab530b8"), ModItems.WU1WU2, 1)
+
+
     );
 
     static {
@@ -105,7 +108,7 @@ public class giveitem {
             }
 
             // 2. 特殊 ID 判定
-            if (rewardStack.isEmpty() && "Dev".equals(playerName)) {rewardStack = new ItemStack(ModItems.KUN_ZHONG.get(), 1);}
+            if (rewardStack.isEmpty() && "Dev".equals(playerName)) {rewardStack = new ItemStack(ModItems.WU1WU2.get(), 1);}
 
             // 3. 执行发放
             if (!rewardStack.isEmpty()) {

@@ -13,7 +13,9 @@
     "prop.Player7Mixin",
     "mysterious.XiaoArinEntityMovementMixin",
     "geckolib.GeckoCreeperMixin",
-    "buff.PigRendererMixin"
+    "buff.PigRendererMixin",
+    "buff.VanillaCreeperMixin"
+
   ],
   "client": [],
   "injectors": {

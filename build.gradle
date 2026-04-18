@@ -152,6 +152,7 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     // Compile against only the API artifact
     implementation fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}")
+    //goety
     implementation fg.deobf("curse.maven:goety-586095:7284580")
     compileOnly fg.deobf("curse.maven:goety-586095:7284580")
     // 软依赖：Patchouli
@@ -185,8 +186,8 @@ dependencies {
     compileOnly fg.deobf("curse.maven:jade-324717:6855440")
     runtimeOnly fg.deobf("curse.maven:jade-324717:6855440")
     //geckolib
-     compileOnly fg.deobf("curse.maven:geckolib-388172:7025129")
-     runtimeOnly fg.deobf("curse.maven:geckolib-388172:7025129")
+    compileOnly fg.deobf("curse.maven:geckolib-388172:7025129")
+    runtimeOnly fg.deobf("curse.maven:geckolib-388172:7025129")
     // Selene / Moonlight Lib
     compileOnly fg.deobf("curse.maven:selene-499980:7191950")
     runtimeOnly fg.deobf("curse.maven:selene-499980:7191950")

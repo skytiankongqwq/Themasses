@@ -89,6 +89,11 @@ public class ClientKeyEvents {
                 anyAbilityTriggered = true;
             }
 
+            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof wu1wu2).isPresent()) {
+                ModMessages.sendToServer(new PacketAbilityKey(-51)); // 发送特殊 ID
+                anyAbilityTriggered = true;
+            }
+
             // --- 情况 3: 默认兜底逻辑 ---
             // 只有当以上任何一件饰品都没穿时，才触发准星目标判定
             if (!anyAbilityTriggered) {

@@ -1,17 +1,11 @@
 package com.first.themasses.curios.mysterious;
 
-import com.first.themasses.curios.IronsCompat;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.first.themasses.Compat.IronsCompat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
@@ -27,8 +21,6 @@ import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import java.util.List;
 import java.util.UUID;
-
-import static com.first.themasses.item.ModItems.HAOZI;
 //+30幸运
 //+15点伤害
 //+1.5攻击速度

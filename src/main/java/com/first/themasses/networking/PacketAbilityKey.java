@@ -5,6 +5,7 @@ import com.first.themasses.curios.mysterious.*;
 import com.first.themasses.curios.ring.heishatangring;
 import com.first.themasses.events.mysterious.DuvaceinEvents;
 import com.first.themasses.events.mysterious.HeishatangEvents;
+import com.first.themasses.events.mysterious.wu1wu2EvolutionHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -105,7 +106,14 @@ public class PacketAbilityKey {
                         .ifPresent(slot -> haozi.executeHaoziSkill(player));
             }
 
-            // --- 10. 指向性/实体判定 (仅当 id >= 0 时触发) ---
+            // --- 10. wu1wu2 (-51) ---
+            if (id == -51) {
+                // 直接使用 player，IDE 已经知道它是 ServerPlayer
+                CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof wu1wu2)
+                        .ifPresent(slot -> {wu1wu2EvolutionHandler.handleAbilityPacket(player, -51);});
+            }
+
+            // --- 11. 指向性/实体判定 (仅当 id >= 0 时触发) ---
             if (id >= 0) {
                 Entity target = player.level().getEntity(id);
                 if (target instanceof LivingEntity livingTarget) {

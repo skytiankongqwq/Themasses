@@ -41,8 +41,8 @@ public class PebbleItem extends Item {
             RandomSource random = level.getRandom();
             double luck = player.getAttributeValue(Attributes.LUCK);
 
-            // 幸运修正：每 1 点幸运增加 10% 的好运概率
-            double roll = random.nextDouble() * 100 + (luck * 10);
+            // 幸运修正：每 1 点幸运增加 1% 的好运概率
+            double roll = random.nextDouble() * 100 + (luck * 1);
 
             if (roll > 85) {
                 giveOre(player, random, true);

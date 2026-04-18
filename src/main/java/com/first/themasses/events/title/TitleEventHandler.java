@@ -73,7 +73,7 @@ public class TitleEventHandler {
         }
 
         if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.LAOWANG237.get()).isPresent()) {titleText = "[baka]";colorStr = "#55FFFF";}
-        if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.WU1WU2.get()).isPresent()) {titleText = "[wu1wu2]";colorStr = "＃9400D3";}
+        if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.WU1WU2.get()).isPresent()) {titleText = "[wu1wu2]";colorStr = "#9400D3";}
 
         if (titleText.isEmpty()) return null;
 

@@ -11,9 +11,6 @@ public class wu1wu2DataManager {
         CompoundTag nbt = player.getPersistentData();
         int currentN = nbt.getInt(NBT_KEY);
         nbt.putInt(NBT_KEY, currentN + 1);
-
-        // 同步通知控制台，方便调试
-        System.out.println("【因果律系统】数据已持久化。当前 n = " + (currentN + 1));
     }
 
     public static int getPermanentN(Player player) {

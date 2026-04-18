@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    "234",
+    "516"
+  ],
+  "key": {
+    "P": {
+      "item": "enigmaticaddons:forgotten_ice"
+    },
+    "S": {
+      "item": "enigmaticaddons:avarice_ring"
+    },
+    "1": {
+      "item": "enigmaticaddons:earth_promise"
+    },
+    "2": {
+      "item": "enigmaticaddons:artificial_flower"
+    },
+    "3": {
+      "item": "enigmaticdelicacy:divine_fruit_pie_block"
+    },
+    "4": {
+      "item": "enigmaticdelicacy:fading_scroll"
+    },
+    "5": {
+      "item": "enigmaticlegacy:enigmatic_eye"
+    },
+    "6": {
+      "item": "enigmaticaddons:ode_to_living"
+    }
+  },
+  "result": {
+    "item": "themasses:laowang237",
+    "count": 1
+  }
+}

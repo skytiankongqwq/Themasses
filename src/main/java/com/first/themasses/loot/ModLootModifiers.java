@@ -16,7 +16,6 @@ public class ModLootModifiers {
             LOOT_MODIFIER_SERIALIZERS.register("add_item", PebbleLootModifier.CODEC);
 
     public static void register(IEventBus bus) {
-        System.err.println("!!!!! DEBUG: 正在注册战利品修改器序列化器 !!!!!");
         LOOT_MODIFIER_SERIALIZERS.register(bus);
     }
 }

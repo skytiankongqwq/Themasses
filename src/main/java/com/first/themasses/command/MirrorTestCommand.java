@@ -20,16 +20,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 public class MirrorTestCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 
-        // 1. 快速传送指令
-        dispatcher.register(Commands.literal("mirrortp")
-                .requires(source -> source.hasPermission(4))
-                .then(Commands.argument("dimension", DimensionArgument.dimension())
-                        .executes(context -> {
-                            ServerLevel targetLevel = DimensionArgument.getDimension(context, "dimension");
-                            context.getSource().sendSuccess(() -> Component.literal("§a[测试] 已安全传送到: " + targetLevel.dimension().location()), true);
-                            return 1;
-                        })));
-        // 2. 伤害指令
+        // 1. 伤害指令
         dispatcher.register(Commands.literal("hurt")
                 .requires(source -> source.hasPermission(4))
                 .then(Commands.argument("targets", EntityArgument.players())
@@ -38,7 +29,6 @@ public class MirrorTestCommand {
                                     float amount = FloatArgumentType.getFloat(context, "damage");
 
                                     EntityArgument.getPlayers(context, "targets").forEach(target -> {
-                                        // 核心修复：从 level 获取伤害源
                                         DamageSource source = target.damageSources().generic();
                                         target.hurt(source, amount);
                                     });
@@ -46,7 +36,7 @@ public class MirrorTestCommand {
                                     context.getSource().sendSuccess(() -> Component.literal("§c[战斗] 已造成伤害（受防御减免）"), true);
                                     return 1;
                                 }))));
-        // 3. 坤钟时长修改指令 /hour <小时数> (支持正负数)
+        // 2. 坤钟时长修改指令 /hour <小时数> (支持正负数)
         dispatcher.register(Commands.literal("hour")
                 .requires(source -> source.hasPermission(4))
                 // 1. 修改最小值限制，使用 Integer.MIN_VALUE 或者一个合理的负数
