@@ -45,11 +45,10 @@ public class wu1wu2ContractHandler {
                     return;
                 }
 
-                // 尝试转化
-                tryContract(livingTarget, serverPlayer);
-
-                // 成功或尝试后取消事件，防止触发实体的原本右键菜单（比如骑马、挤奶等）
-                event.setCanceled(true);
+                // 尝试转化，如果转化或驯服成功，才取消原版右键事件（避免影响不能转化的生物，如骑猪）
+                if (tryContract(livingTarget, serverPlayer)) {
+                    event.setCanceled(true);
+                }
             }
         }
     }
@@ -70,16 +69,19 @@ public class wu1wu2ContractHandler {
                 return;
             }
 
-            event.setNewTarget(null);
-            tryContract(attacker, player);
+            // 如果转化或驯服成功，才清除怪物的仇恨。如果无法转化，怪物会继续攻击玩家
+            if (tryContract(attacker, player)) {
+                event.setNewTarget(null);
+            }
         }
     }
 
     /**
      * 核心契约转换逻辑
+     * 将返回值改为 boolean，用于告知调用者是否成功进行了转化/驯服
      */
-    private static void tryContract(LivingEntity target, ServerPlayer master) {
-        if (!(target.level() instanceof ServerLevel level) || !target.isAlive() || target instanceof Player) return;
+    private static boolean tryContract(LivingEntity target, ServerPlayer master) {
+        if (!(target.level() instanceof ServerLevel level) || !target.isAlive() || target instanceof Player) return false;
 
         // 1. 尝试寻找 Goety 仆从转换 (这属于深度转化)
         String entityName = EntityType.getKey(target.getType()).getPath();
@@ -111,18 +113,27 @@ public class wu1wu2ContractHandler {
 
             completeContract(servant, master);
             master.displayClientMessage(Component.literal("§d眷属契约：§f" + servant.getDisplayName().getString() + " §d已加入。"), true);
-
+            return true;
         } else {
             // --- 逻辑 B: 强制驯服原生物 ---
+            boolean isTamed = false;
+
             // 针对原版可驯服生物 (狼、猫、鹦鹉等)
             if (target instanceof TamableAnimal tamable) {
                 tamable.tame(master); // 调用原版驯服方法
                 tamable.setOrderedToSit(false); // 确保它不会原地坐下
+                isTamed = true;
             }
             // 针对马类
             else if (target instanceof AbstractHorse horse) {
                 horse.setTamed(true);
                 horse.setOwnerUUID(master.getUUID());
+                isTamed = true;
+            }
+
+            // 【关键修复】如果既没有 Goety 对应仆从，又不能被原版驯服，则什么都不做，直接宣告失败
+            if (!isTamed) {
+                return false;
             }
 
             // 统一打上眷属标记，确保享受你的 EvolutionHandler 加成
@@ -136,8 +147,10 @@ public class wu1wu2ContractHandler {
 
             completeContract(target, master);
             master.displayClientMessage(Component.literal("§6眷属驯服：§f" + target.getDisplayName().getString() + " §6已效忠。"), true);
+            return true;
         }
     }
+
     /**
      * 提取公共的契约完成步骤：增加N值、注册UUID、全域刷新
      */
