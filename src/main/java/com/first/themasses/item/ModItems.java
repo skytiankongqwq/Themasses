@@ -13,6 +13,7 @@ import com.first.themasses.item.food.SpiritLiquidVialItem;
 import com.first.themasses.item.prop.*;
 import com.first.themasses.item.sword.SoulBannerItem;
 import com.first.themasses.item.sword.VoidPiercer;
+import com.first.themasses.item.sword.Wu1wu2Sword;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -371,6 +372,18 @@ public class    ModItems {
     public static final RegistryObject<Item> WU1WU2 = ITEMS.register(
             "wu1wu2",
             () -> new wu1wu2(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //wu1wu2压榨商人
+    public static final RegistryObject<Item> BLADEOFTRADE = ITEMS.register(
+            "bladeoftrade",
+            () -> new Wu1wu2Sword()
             {
                 @Override
                 public @NotNull Component getName(@NotNull ItemStack pStack) {

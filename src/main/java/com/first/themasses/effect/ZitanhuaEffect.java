@@ -13,9 +13,9 @@ public class ZitanhuaEffect extends MobEffect {
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         // 只有当等级达到 V 级 (amplifier 为 4) 时触发爆发
         if (amplifier >= 4) {
-            // 1. 计算 5% 最大生命值的伤害
+            // 1. 计算 20% 最大生命值的伤害
             float maxHealth = entity.getMaxHealth();
-            float damageAmount = maxHealth * 0.1F;
+            float damageAmount = maxHealth * 0.2F;
 
             // 2. 扣除生命值
             // 使用 setHealth 绕过伤害系统，防止触发死循环，同时也符合“移除所有 Buff”的剥离感

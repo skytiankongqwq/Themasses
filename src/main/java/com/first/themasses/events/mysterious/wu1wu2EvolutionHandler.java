@@ -3,18 +3,18 @@ package com.first.themasses.events.mysterious;
 import com.first.themasses.item.ModItems;
 import com.first.themasses.util.SearchServant;
 import com.first.themasses.util.wu1wu2DataManager;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -29,18 +29,21 @@ public class wu1wu2EvolutionHandler {
     private static final String ENHANCED_TAG = "SentientEnhanced";
     private static final double MAX_HEALTH_LIMIT = 5152520.0;
 
-    // 专属的 UUID 修饰符，用于保证无论怎么刷新都不叠加、不丢失
-    private static final UUID SERVANT_HP_MOD_UUID = UUID.fromString("f42a781b-5e6a-4b9d-8c12-3a4b5c6d7e8f");
-    private static final UUID SERVANT_DMG_MOD_UUID = UUID.fromString("a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d");
-    private static final UUID SERVANT_ARMOR_MOD_UUID = UUID.fromString("11223344-5566-7788-99aa-bbccddeeff00");
+    // --- 玩家属性专用 UUID 阵列 ---
+    private static final UUID P_HP_UUID = UUID.fromString("f42a781b-5e6a-4b9d-8c12-3a4b5c6d7e8f");
+    private static final UUID P_DMG_UUID = UUID.fromString("a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d");
+    private static final UUID P_SPD_UUID = UUID.fromString("c9d8e7f6-a5b4-3c2d-1e0f-9a8b7c6d5e4f");
+    private static final UUID P_ARM_UUID = UUID.fromString("11223344-5566-7788-99aa-bbccddeeff00");
+    private static final UUID P_TOU_UUID = UUID.fromString("aabbccdd-eeff-1122-3344-556677889900");
+    private static final UUID P_LUK_UUID = UUID.fromString("77777777-8888-9999-0000-aaaaaaaaaaaa");
+    private static final UUID P_KBR_UUID = UUID.fromString("12345678-1234-1234-1234-123456789012");
 
-    // 用于随时开关仆从转化功能
+    // --- 仆从属性专用 UUID ---
+    private static final UUID SERVANT_HP_MOD_UUID = UUID.fromString("b0bafeef-dead-beef-cafe-000000000001");
+    private static final UUID SERVANT_DMG_MOD_UUID = UUID.fromString("b0bafeef-dead-beef-cafe-000000000002");
+
     public static boolean isServantConversionEnabled = true;
 
-    /**
-     * 处理来自 PacketAbilityKey 的数据包
-     * 请在你的 Packet 处理类中调用此方法
-     */
     public static void handleAbilityPacket(ServerPlayer player, int entityId) {
         if (entityId == -51) {
             isServantConversionEnabled = !isServantConversionEnabled;
@@ -49,8 +52,33 @@ public class wu1wu2EvolutionHandler {
         }
     }
 
-    // 计算属性倍率：根据 N 值获取 Log2 的增长曲线
-    private static double getLog2Multiplier(int n) {
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        Player oldPlayer = event.getOriginal();
+        Player newPlayer = event.getEntity();
+        CompoundTag oldForgeData = oldPlayer.getPersistentData();
+        if (oldForgeData.contains(Player.PERSISTED_NBT_TAG)) {
+            newPlayer.getPersistentData().put(Player.PERSISTED_NBT_TAG,
+                    oldForgeData.getCompound(Player.PERSISTED_NBT_TAG).copy());
+        }
+    }
+
+    // 【修复】登入时立刻同步数据
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            refreshStats(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            refreshStats(player);
+        }
+    }
+
+    public static double getLog2Multiplier(int n) {
         return 0.1 * n + 0.005 * n * Math.log10(n + 1);
     }
 
@@ -59,18 +87,15 @@ public class wu1wu2EvolutionHandler {
         LivingEntity victim = event.getEntity();
         Entity source = event.getSource().getEntity();
 
-        // 1. 玩家攻击敌人时，造成额外伤害并挂上易伤 Tag
         if (source instanceof Player attacker && hasUnity(attacker)) {
             int n = wu1wu2DataManager.getPermanentN(attacker);
             if (n > 0) {
                 float multiplier = (float) getLog2Multiplier(n);
-                event.setAmount(event.getAmount() * multiplier);
-                applyEnemyDebuff(victim, n);
+                event.setAmount(event.getAmount() * (1.0F + multiplier));
                 victim.getPersistentData().putInt("SentientVulnerability", n);
             }
         }
 
-        // 2. 玩家受击时，根据增长曲线提供减伤
         if (victim instanceof Player player && hasUnity(player)) {
             int n = wu1wu2DataManager.getPermanentN(player);
             if (n > 0) {
@@ -79,7 +104,6 @@ public class wu1wu2EvolutionHandler {
             }
         }
 
-        // 3. 敌人身上有易伤 Tag 时，放大其受到的最终伤害
         if (victim.getPersistentData().contains("SentientVulnerability")) {
             int n = victim.getPersistentData().getInt("SentientVulnerability");
             double vulnerability = getLog2Multiplier(n);
@@ -88,178 +112,162 @@ public class wu1wu2EvolutionHandler {
     }
 
     @SubscribeEvent
-    public static void onServantUpdate(TickEvent.PlayerTickEvent event) {
-        // 确保在服务端运行且在 Tick 结束阶段执行，避免重复运算
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.END && !event.player.level().isClientSide) {
             ServerPlayer player = (ServerPlayer) event.player;
-
-            if (hasUnity(player)) {
-                // 每 40 tick (2秒) 刷新一次玩家和仆从的状态
-                if (player.level().getGameTime() % 40 == 0) {
-                    int n = wu1wu2DataManager.getPermanentN(player);
-                    if (n > 0) {
-                        double multiplier = getLog2Multiplier(n);
-
-                        // 1. 玩家自身属性更新 (始终执行，保证倍率随 n 实时变化)
-                        updatePlayerAttributes(player, multiplier, n);
-
-                        // 2. 强化仆从逻辑
-                        // 如果开关关闭，不再寻找新生物转化，但已存在的仆从仍需维持生命上限，否则会血崩
-                        // 因此去掉 isServantConversionEnabled 的拦截，让现存仆从的属性得以稳固
-                        if (player.level() instanceof ServerLevel serverLevel) {
-                            SearchServant.getEnhancedServantData(player).ifPresent(data -> {
-                                data.servantDetails.keySet().forEach(uuid -> {
-                                    Entity entity = serverLevel.getEntity(uuid);
-                                    if (entity instanceof LivingEntity servant && servant.isAlive()) {
-                                        boostServantOnce(servant, multiplier, n);
-                                    }
-                                });
-                            });
-                        }
-                    }
-                }
-            } else {
-                // 若玩家摘下了饰品，重置玩家属性
-                if (player.level().getGameTime() % 40 == 0) {
-                    resetPlayerAttributes(player);
-                }
+            if (player.level().getGameTime() % 40 == 0) {
+                refreshStats(player);
             }
         }
     }
 
-    private static void updatePlayerAttributes(ServerPlayer player, double multiplier, int n) {
-        double targetHp = Math.min(20.0 * (multiplier +1.0), MAX_HEALTH_LIMIT);
-        setBase(player, Attributes.MAX_HEALTH, targetHp);
-        setBase(player, Attributes.ATTACK_DAMAGE, multiplier +n +1);
-        setBase(player, Attributes.ATTACK_SPEED, 4.0 + (n * 0.02));
-        setBase(player, Attributes.ARMOR, n * 1.0);
-        setBase(player, Attributes.ARMOR_TOUGHNESS, n * 1.0);
-        setBase(player, Attributes.LUCK, n * 1.0+1.0);
-        setBase(player, Attributes.KNOCKBACK_RESISTANCE, n * 0.01);
+    /**
+     * 【重磅修复】全局同步方法
+     * 现在的逻辑：不仅检查列表，还提供一个“强制目标”选项
+     */
+    public static void refreshStats(ServerPlayer player) {
+        if (!hasUnity(player)) {
+            removeAllModifiers(player);
+            return;
+        }
+
+        int n = wu1wu2DataManager.getPermanentN(player);
+        double multiplier = getLog2Multiplier(n);
+
+        // 1. 同步玩家自身
+        applyPlayerModifiers(player, multiplier, n);
+
+        // 2. 增强型全域扫描
+        if (player.level() instanceof ServerLevel serverLevel) {
+            // A. 扫描玩家周围 64 格
+            serverLevel.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(64)).forEach(e -> {
+                if (isValidServant(e, player)) {
+                    boostServant(e, multiplier, n);
+                }
+            });
+
+            // B. 列表保底（处理不在玩家身边的仆从）
+            SearchServant.getEnhancedServantData(player).ifPresent(data -> {
+                for (UUID uuid : data.servantDetails.keySet()) {
+                    Entity entity = serverLevel.getEntity(uuid);
+                    if (entity instanceof LivingEntity servant && servant.isAlive()) {
+                        boostServant(servant, multiplier, n);
+                    }
+                }
+            });
+        }
+    }
+
+    private static void applyPlayerModifiers(ServerPlayer player, double m, int n) {
+        float oldMax = player.getMaxHealth();
+
+        double hpBonus = Math.min(20.0 * m, MAX_HEALTH_LIMIT);
+        updateModifier(player, Attributes.MAX_HEALTH, P_HP_UUID, "UnityHP", hpBonus);
+
+        float newMax = player.getMaxHealth();
+
+        // 【核心修复】计算上限差值。如果上限增加了，立刻将差值作为治疗量补给玩家，彻底解决血条不满
+        if (newMax > oldMax) {
+            player.heal(newMax - oldMax);
+        }
+
+        updateModifier(player, Attributes.ATTACK_DAMAGE, P_DMG_UUID, "UnityDMG", n * 0.5 + m);
+        updateModifier(player, Attributes.ATTACK_SPEED, P_SPD_UUID, "UnitySPD", n * 0.02);
+        updateModifier(player, Attributes.ARMOR, P_ARM_UUID, "UnityARM", n * 1.0);
+        updateModifier(player, Attributes.ARMOR_TOUGHNESS, P_TOU_UUID, "UnityTOU", n * 1.0);
+        updateModifier(player, Attributes.LUCK, P_LUK_UUID, "UnityLUK", n * 0.1);
+        updateModifier(player, Attributes.KNOCKBACK_RESISTANCE, P_KBR_UUID, "UnityKBR", Math.min(n * 0.01, 1.0));
         applyIronsMana(player, n * 1.0);
     }
 
-    private static void setBase(LivingEntity entity, Attribute attr, double value) {
-        AttributeInstance inst = entity.getAttribute(attr);
-        if (inst != null) inst.setBaseValue(value);
+    /**
+     * 【新增】兼容性判定逻辑
+     */
+    private static boolean isValidServant(LivingEntity entity, Player player) {
+        // 1. 检查是否带了我们的特殊仆从标签
+        if (entity.getPersistentData().getBoolean("IsSentientServant")) return true;
+
+        // 2. 检查是否为原版驯服生物（狼、猫、马、鹦鹉等）
+        if (entity instanceof OwnableEntity ownable) {
+            return player.getUUID().equals(ownable.getOwnerUUID());
+        }
+
+        return false;
     }
 
-    private static void resetPlayerAttributes(ServerPlayer player) {
-        AttributeInstance hp = player.getAttribute(Attributes.MAX_HEALTH);
-        if (hp != null && hp.getBaseValue() > 20.1) {
-            hp.setBaseValue(20.0);
-            setBase(player, Attributes.ATTACK_DAMAGE, 1.0);
-            setBase(player, Attributes.ATTACK_SPEED, 4.0);
-            setBase(player, Attributes.ARMOR, 0.0);
-            setBase(player, Attributes.ARMOR_TOUGHNESS, 0.0);
-            setBase(player, Attributes.LUCK, 0.0);
-            setBase(player, Attributes.KNOCKBACK_RESISTANCE, 0.0);
-            applyIronsMana(player, 0.0);
+    public static void boostServant(LivingEntity servant, double m, int n) {
+        // 这里不再直接 return，由外部 isValidServant 过滤
+        AttributeInstance hpInst = servant.getAttribute(Attributes.MAX_HEALTH);
+        if (hpInst != null) {
+            float oldMax = servant.getMaxHealth();
+            double baseHp = hpInst.getBaseValue();
+
+            // 公式：基础血量 * (1 + 倍率) + 固定加成
+            double hpBonus = (baseHp * m) + (double)n;
+
+            updateModifier(servant, Attributes.MAX_HEALTH, SERVANT_HP_MOD_UUID, "ServantHP", hpBonus);
+
+            float newMax = servant.getMaxHealth();
+            if (newMax > oldMax) {
+                // 如果是新加成，直接补满；如果是老加成微调，补差价
+                servant.heal(newMax - oldMax);
+            }
+        }
+
+        AttributeInstance dmgInst = servant.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (dmgInst != null) {
+            // 攻击力也按比例 + 固定值
+            double dmgBonus = (dmgInst.getBaseValue() * m) + (n * 0.5);
+            updateModifier(servant, Attributes.ATTACK_DAMAGE, SERVANT_DMG_MOD_UUID, "ServantDMG", dmgBonus);
         }
     }
 
-    // 兼容 Iron's Spellbooks 法力值
+    private static void updateModifier(LivingEntity entity, Attribute attr, UUID uuid, String name, double value) {
+        AttributeInstance inst = entity.getAttribute(attr);
+        if (inst != null) {
+            AttributeModifier existing = inst.getModifier(uuid);
+            if (existing == null || Math.abs(existing.getAmount() - value) > 0.001) {
+                if (existing != null) inst.removeModifier(uuid);
+                if (value != 0) {
+                    inst.addPermanentModifier(new AttributeModifier(uuid, name, value, AttributeModifier.Operation.ADDITION));
+                }
+            }
+        }
+    }
+
+    private static void removeAllModifiers(ServerPlayer player) {
+        removeModifier(player, Attributes.MAX_HEALTH, P_HP_UUID);
+        removeModifier(player, Attributes.ATTACK_DAMAGE, P_DMG_UUID);
+        removeModifier(player, Attributes.ATTACK_SPEED, P_SPD_UUID);
+        removeModifier(player, Attributes.ARMOR, P_ARM_UUID);
+        removeModifier(player, Attributes.ARMOR_TOUGHNESS, P_TOU_UUID);
+        removeModifier(player, Attributes.LUCK, P_LUK_UUID);
+        removeModifier(player, Attributes.KNOCKBACK_RESISTANCE, P_KBR_UUID);
+        applyIronsMana(player, 0.0);
+    }
+
+    private static void removeModifier(LivingEntity entity, Attribute attr, UUID uuid) {
+        AttributeInstance inst = entity.getAttribute(attr);
+        if (inst != null && inst.getModifier(uuid) != null) inst.removeModifier(uuid);
+    }
+
     private static void applyIronsMana(Player player, double bonus) {
         try {
-            // 最大法力值
-            Attribute manaAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "max_mana"));
-            if (manaAttr != null) {
-                AttributeInstance inst = player.getAttribute(manaAttr);
-                if (inst != null) {
-                    inst.setBaseValue(100.0 + bonus);
-                }
-            }
-
-            // 通用法术强度 (Spell Power)
-            Attribute spellPowerAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "spell_power"));
-            if (spellPowerAttr != null) {
-                AttributeInstance inst = player.getAttribute(spellPowerAttr);
-                if (inst != null) {
-                    inst.setBaseValue(bonus * 0.01 +1);
-                }
-            }
-
-            // 通用法术冷却缩减 (Cooldown Reduction)
-            Attribute cooldownAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "cooldown_reduction"));
-            if (cooldownAttr != null) {
-                AttributeInstance inst = player.getAttribute(cooldownAttr);
-                if (inst != null) {
-                    inst.setBaseValue(Math.min(bonus * 0.001 + 1, 3));
-                }
-            }
-
-            // 通用法术吟唱缩减 (Cast Time Reduction)
-            Attribute castTimeAttr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", "cast_time_reduction"));
-            if (castTimeAttr != null) {
-                AttributeInstance inst = player.getAttribute(castTimeAttr);
-                if (inst != null) {
-                    inst.setBaseValue(Math.min(bonus * 0.001 + 1, 3));
-                }
-            }
+            updateIronsAttr(player, "max_mana", 100.0 + bonus);
+            updateIronsAttr(player, "spell_power", 1.0 + (bonus * 0.01));
         } catch (Exception ignored) {}
     }
 
-    // ========== 修复核心：安全的修饰符附加逻辑 ==========
-    private static void boostServantOnce(LivingEntity servant, double m, int n) {
-        // 关键：打上标签，防止重复扫描
-        if (!servant.getPersistentData().getBoolean(ENHANCED_TAG)) {
-            servant.getPersistentData().putBoolean(ENHANCED_TAG, true);
-        }
-
-        // --- 1. 生命值加成 (修复重进变半颗心的问题) ---
-        AttributeInstance hpInst = servant.getAttribute(Attributes.MAX_HEALTH);
-        if (hpInst != null) {
-            double pureBase = hpInst.getBaseValue();
-            double expectedDiff = (pureBase * (m - 1.0)) + (double)n;
-
-            AttributeModifier currentMod = hpInst.getModifier(SERVANT_HP_MOD_UUID);
-
-            // 【重点】：仅当修饰符不存在，或者当前加成值与期望值不一致时，才进行替换。
-            // 严禁每 2 秒移除了重加，这会导致血条瞬间被原版机制截断。
-            if (expectedDiff > 0 && (currentMod == null || Math.abs(currentMod.getAmount() - expectedDiff) > 0.1)) {
-                if (currentMod != null) {
-                    hpInst.removeModifier(SERVANT_HP_MOD_UUID);
-                }
-                hpInst.addPermanentModifier(new AttributeModifier(SERVANT_HP_MOD_UUID, "SentientHP", expectedDiff, AttributeModifier.Operation.ADDITION));
-
-                // 只有在上限真正发生改变时，才拉满血条，平时让它可以正常受伤和回血
-                servant.setHealth(servant.getMaxHealth());
-            }
-        }
-
-        // --- 2. 攻击力加成 ---
-        AttributeInstance dmgInst = servant.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (dmgInst != null) {
-            double expectedDmgDiff = (dmgInst.getBaseValue() * (m - 1.0)) + (double)n;
-            AttributeModifier currentDmgMod = dmgInst.getModifier(SERVANT_DMG_MOD_UUID);
-
-            if (expectedDmgDiff > 0 && (currentDmgMod == null || Math.abs(currentDmgMod.getAmount() - expectedDmgDiff) > 0.1)) {
-                if (currentDmgMod != null) {
-                    dmgInst.removeModifier(SERVANT_DMG_MOD_UUID);
-                }
-                dmgInst.addPermanentModifier(new AttributeModifier(SERVANT_DMG_MOD_UUID, "SentientDMG", expectedDmgDiff, AttributeModifier.Operation.ADDITION));
-            }
+    private static void updateIronsAttr(Player player, String path, double val) {
+        Attribute attr = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks", path));
+        if (attr != null) {
+            AttributeInstance inst = player.getAttribute(attr);
+            if (inst != null) inst.setBaseValue(val);
         }
     }
 
-    // 给敌人上削弱属性
-    private static void applyEnemyDebuff(LivingEntity enemy, int n) {
-        double mult = Math.pow(0.9, n);
-        scaleAttr(enemy, Attributes.MAX_HEALTH, mult);
-        scaleAttr(enemy, Attributes.ATTACK_DAMAGE, mult);
-    }
-
-    private static void scaleAttr(LivingEntity e, Attribute a, double m) {
-        AttributeInstance i = e.getAttribute(a);
-        if (i != null) i.setBaseValue(i.getBaseValue() * m);
-    }
-
-    // 检查玩家是否佩戴了指定的饰品
     private static boolean hasUnity(Player p) {
         if (p == null) return false;
-        return CuriosApi.getCuriosHelper().findFirstCurio(p, stack -> {
-            if (stack == null || stack.isEmpty()) return false;
-            return stack.is(ModItems.WU1WU2.get());
-        }).isPresent();
+        return CuriosApi.getCuriosHelper().findFirstCurio(p, ModItems.WU1WU2.get()).isPresent();
     }
 }
