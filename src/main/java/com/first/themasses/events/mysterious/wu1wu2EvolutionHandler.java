@@ -41,6 +41,8 @@ public class wu1wu2EvolutionHandler {
     // --- 仆从属性专用 UUID ---
     private static final UUID SERVANT_HP_MOD_UUID = UUID.fromString("b0bafeef-dead-beef-cafe-000000000001");
     private static final UUID SERVANT_DMG_MOD_UUID = UUID.fromString("b0bafeef-dead-beef-cafe-000000000002");
+    private static final UUID SERVANT_ARMOR_MOD_UUID = UUID.fromString("b0bafeef-dead-beef-cafe-000000000003");
+    private static final UUID SERVANT_TOUGHNESS_MOD_UUID = UUID.fromString("b0bafeef-dead-beef-cafe-000000000004");
 
     public static boolean isServantConversionEnabled = true;
 
@@ -220,6 +222,18 @@ public class wu1wu2EvolutionHandler {
             double dmgBonus = (dmgInst.getBaseValue() * m) + (n * 0.5);
             updateModifier(servant, Attributes.ATTACK_DAMAGE, SERVANT_DMG_MOD_UUID, "ServantDMG", dmgBonus);
         }
+
+        AttributeInstance armorInst = servant.getAttribute(Attributes.ARMOR);
+        if (armorInst != null) {
+            double armorBonus = (armorInst.getBaseValue() * m) + (n * 0.5);
+            updateModifier(servant, Attributes.ARMOR, SERVANT_ARMOR_MOD_UUID, "ServantARMOR", armorBonus);
+        }
+
+        AttributeInstance toughnessInst = servant.getAttribute(Attributes.ARMOR_TOUGHNESS);
+        if (toughnessInst != null) {
+            double toughnessBonus = (toughnessInst.getBaseValue() * m) + (n * 0.5);
+            updateModifier(servant, Attributes.ARMOR_TOUGHNESS, SERVANT_TOUGHNESS_MOD_UUID, "ServantTOUGHNESS", toughnessBonus);
+        }
     }
 
     private static void updateModifier(LivingEntity entity, Attribute attr, UUID uuid, String name, double value) {
@@ -255,6 +269,8 @@ public class wu1wu2EvolutionHandler {
         try {
             updateIronsAttr(player, "max_mana", 100.0 + bonus);
             updateIronsAttr(player, "spell_power", 1.0 + (bonus * 0.01));
+            updateIronsAttr(player, "cooldown_reduction", Math.min(bonus * 0.001 + 1, 3));
+            updateIronsAttr(player, "cast_time_reduction", Math.min(bonus * 0.001 + 1, 3));
         } catch (Exception ignored) {}
     }
 

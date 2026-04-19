@@ -1,0 +1,40 @@
+{
+  "type": "goety:ritual",
+  "ritual_type": "goety:craft",
+  "activation_item": {
+    "item": "goety:dark_sword"
+  },
+  "craftType": "forge",
+  "research": "forbidden",
+  "soulCost": 200,
+  "duration": 15,
+  "ingredients": [
+    {
+      "item": "minecraft:emerald_block"
+    },
+    {
+      "item": "minecraft:emerald_block"
+    },
+    {
+      "item": "minecraft:emerald_block"
+    },
+    {
+      "item": "minecraft:emerald_block"
+    },
+    {
+      "item": "enigmaticaddons:avarice_ring"
+    },
+    {
+      "item": "enigmaticaddons:avarice_ring"
+    },
+    {
+      "item": "enigmaticaddons:avarice_ring"
+    },
+    {
+      "item": "enigmaticaddons:avarice_ring"
+    }
+  ],
+  "result": {
+    "item": "themasses:bladeoftrade"
+  }
+}
