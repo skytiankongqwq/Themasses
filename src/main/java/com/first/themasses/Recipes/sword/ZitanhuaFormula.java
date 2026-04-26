@@ -22,11 +22,6 @@ public class ZitanhuaFormula {
 
     // 定义击杀序列
     private static final List<EntityType<?>> TARGET_SEQUENCE = List.of(
-            EntityType.ELDER_GUARDIAN,
-            EntityType.WARDEN,
-            EntityType.WITHER,
-            EntityType.DOLPHIN,
-            EntityType.PUFFERFISH,
             EntityType.BAT
     );
 

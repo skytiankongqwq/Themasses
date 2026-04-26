@@ -1,7 +1,6 @@
 package com.first.themasses.curios.mysterious;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ClickAction;
@@ -24,19 +23,23 @@ public class SweetToothRelicItem extends Item implements ICurioItem {
         super(properties.stacksTo(1));
     }
 
+    // 饰品本身每10s（200 tick）增加一个糖的计数
     @Override
     public void curioTick(SlotContext slotContext, ItemStack stack) {
         if (!slotContext.entity().level().isClientSide && slotContext.entity() instanceof Player player) {
             if (player.tickCount % 200 == 0) {
-                stack.getOrCreateTag().putInt("SugarCount", stack.getOrCreateTag().getInt("SugarCount") + 1);
+                int currentSugar = stack.getOrCreateTag().getInt("SugarCount");
+                stack.getOrCreateTag().putInt("SugarCount", currentSugar + 1);
             }
         }
     }
 
+    // 在背包里用糖右键饰品，可以储存糖
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack pStack, ItemStack pOther, Slot pSlot, ClickAction pAction, Player pPlayer, SlotAccess pAccess) {
         if (pAction == ClickAction.SECONDARY && pOther.is(Items.SUGAR)) {
-            pStack.getOrCreateTag().putInt("SugarCount", pStack.getOrCreateTag().getInt("SugarCount") + pOther.getCount());
+            int currentSugar = pStack.getOrCreateTag().getInt("SugarCount");
+            pStack.getOrCreateTag().putInt("SugarCount", currentSugar + pOther.getCount());
             pOther.setCount(0);
             pPlayer.playSound(SoundEvents.ITEM_PICKUP, 0.5F, 1.5F);
             return true;

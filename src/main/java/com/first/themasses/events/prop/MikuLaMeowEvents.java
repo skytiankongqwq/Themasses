@@ -193,6 +193,7 @@ public class MikuLaMeowEvents {
     public static void applyAreaBlessing(LivingEntity target, ItemStack stack) {
         int upLevel = stack.getOrCreateTag().getInt("UpgradeLevel");
         int durUp = stack.getOrCreateTag().getInt("DurationUp");
+        float oldMax = target.getMaxHealth();
         int areaLevel = 0 + upLevel;
         int duration = 600 + (durUp * 200);
 
@@ -209,6 +210,11 @@ public class MikuLaMeowEvents {
 
             Attribute mikuSize = getMikuSizeAttr();
             if (mikuSize != null) modify(target, mikuSize, 0.10, MIKU_BUFF_ID);
+
+            float addedHealth = target.getMaxHealth() - oldMax;
+            if (addedHealth > 0) {
+                target.setHealth(target.getHealth() + addedHealth);
+            }
         }
 
         target.getPersistentData().putLong("MikuBuffEnd_Area", target.level().getGameTime() + duration);
