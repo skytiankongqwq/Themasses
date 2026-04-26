@@ -13,6 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.TickEvent;
@@ -81,7 +82,7 @@ public class wu1wu2EvolutionHandler {
     }
 
     public static double getLog2Multiplier(int n) {
-        return 0.1 * n + 0.005 * n * Math.log10(n + 1);
+        return 0.05 * n + 0.005 * n * Math.log10(n + 1);
     }
 
     @SubscribeEvent
@@ -110,6 +111,27 @@ public class wu1wu2EvolutionHandler {
             int n = victim.getPersistentData().getInt("SentientVulnerability");
             double vulnerability = getLog2Multiplier(n);
             event.setAmount((float) (event.getAmount() * (1.0 + vulnerability)));
+        }
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onBeingDamage(LivingDamageEvent event){
+        LivingEntity victim = event.getEntity();
+        Entity source = event.getSource().getEntity();
+
+        if (victim instanceof Player player && hasUnity(player)) {
+            int n = wu1wu2DataManager.getPermanentN(player);
+            if (n > 0) {
+                float damageReduction = (float) getLog2Multiplier(n);
+                float maxHealth = victim.getMaxHealth();
+                float damagePercent = 100.0f / (damageReduction + 0.05f);
+                float maxDamage = maxHealth * (damagePercent / 100.0f);
+                maxDamage = Math.max(maxDamage, maxHealth * 0.01f);
+
+                if (event.getAmount() > maxDamage) {
+                    event.setAmount(maxDamage);
+                }
+            }
         }
     }
 
@@ -163,7 +185,7 @@ public class wu1wu2EvolutionHandler {
     private static void applyPlayerModifiers(ServerPlayer player, double m, int n) {
         float oldMax = player.getMaxHealth();
 
-        double hpBonus = Math.min(20.0 * m, MAX_HEALTH_LIMIT);
+        double hpBonus = Math.min(10.0 * m, MAX_HEALTH_LIMIT);
         updateModifier(player, Attributes.MAX_HEALTH, P_HP_UUID, "UnityHP", hpBonus);
 
         float newMax = player.getMaxHealth();
@@ -173,10 +195,10 @@ public class wu1wu2EvolutionHandler {
             player.heal(newMax - oldMax);
         }
 
-        updateModifier(player, Attributes.ATTACK_DAMAGE, P_DMG_UUID, "UnityDMG", n * 0.5 + m);
-        updateModifier(player, Attributes.ATTACK_SPEED, P_SPD_UUID, "UnitySPD", n * 0.02);
-        updateModifier(player, Attributes.ARMOR, P_ARM_UUID, "UnityARM", n * 1.0);
-        updateModifier(player, Attributes.ARMOR_TOUGHNESS, P_TOU_UUID, "UnityTOU", n * 1.0);
+        updateModifier(player, Attributes.ATTACK_DAMAGE, P_DMG_UUID, "UnityDMG", n * 0.05 + m);
+        updateModifier(player, Attributes.ATTACK_SPEED, P_SPD_UUID, "UnitySPD", n * 0.01);
+        updateModifier(player, Attributes.ARMOR, P_ARM_UUID, "UnityARM", n * 0.2);
+        updateModifier(player, Attributes.ARMOR_TOUGHNESS, P_TOU_UUID, "UnityTOU", n * 0.2);
         updateModifier(player, Attributes.LUCK, P_LUK_UUID, "UnityLUK", n * 0.1);
         updateModifier(player, Attributes.KNOCKBACK_RESISTANCE, P_KBR_UUID, "UnityKBR", Math.min(n * 0.01, 1.0));
         applyIronsMana(player, n * 1.0);
