@@ -11,11 +11,16 @@ import com.first.themasses.item.ModCreativeTabs;
 import com.first.themasses.item.ModItems;
 import com.first.themasses.loot.ModLootModifiers;
 import com.first.themasses.networking.ModMessages;
+import com.first.themasses.util.ModAttributes;
 import com.first.themasses.worldgen.structure.ModStructures;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
@@ -23,6 +28,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -36,6 +42,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
 import com.first.themasses.item.food.goetyitem;
+
+import java.util.UUID;
 
 import static com.first.themasses.util.SoundRegistry.SOUNDS;
 
@@ -66,6 +74,7 @@ public class TheMasses {
         ModCreativeTabs.register(modEventBus);
         ModStructures.register(modEventBus);
         ModLootModifiers.register(modEventBus);
+        ModAttributes.register(modEventBus);
 
 
         ModMessages.register();

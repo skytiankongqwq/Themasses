@@ -5,7 +5,6 @@ import com.first.themasses.block.ModBlock;
 import com.first.themasses.curios.all.MarbleShardItem;
 import com.first.themasses.curios.mysterious.*;
 import com.first.themasses.curios.ring.heishatangring;
-import com.first.themasses.effect.ModEffects;
 import com.first.themasses.item.food.DoofGnawoalItem;
 import com.first.themasses.item.food.ForbiddenFruitItem;
 import com.first.themasses.item.food.LaowangFoodLight;
@@ -16,10 +15,9 @@ import com.first.themasses.item.sword.VoidPiercer;
 import com.first.themasses.item.sword.Wu1wu2Sword;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -389,6 +387,59 @@ public class    ModItems {
                 public @NotNull Component getName(@NotNull ItemStack pStack) {
                     return Component.translatable(this.getDescriptionId(pStack))
                             .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //白鲨糖
+    public static final RegistryObject<Item> BAISHATANG = ITEMS.register(
+            "baishatang",
+            () -> new SweetToothRelicItem(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    return Component.translatable(this.getDescriptionId(pStack))
+                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
+                }
+            }
+    );
+    //菈
+    public static final RegistryObject<Item> MIKULA = ITEMS.register(
+            "mikula",
+            () -> new MikuLa(new Item.Properties().stacksTo(1)) {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    // 1. 获取翻译后的原始名称字符串
+                    String rawName = Component.translatable(this.getDescriptionId(pStack)).getString();
+                    // 2. 创建承载彩色名字的容器
+                    MutableComponent finalName = Component.empty();
+                    // 3. 循环处理每个字符
+                    for (int i = 0; i < rawName.length(); i++) {
+                        // 交替颜色：偶数为白色，奇数为淡紫色（粉色）
+                        ChatFormatting color = (i % 2 == 0) ? ChatFormatting.WHITE : ChatFormatting.LIGHT_PURPLE;
+                        finalName.append(Component.literal(String.valueOf(rawName.charAt(i))).withStyle(color));
+                    }
+                    return finalName;
+                }
+            }
+    );
+    //菈的祝福
+    public static final RegistryObject<Item> MIKUPROP = ITEMS.register(
+            "mikuprop",
+            () -> new MikuLaMeowBlessingItem(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    // 1. 获取翻译后的原始名称字符串
+                    String rawName = Component.translatable(this.getDescriptionId(pStack)).getString();
+                    // 2. 创建承载彩色名字的容器
+                    MutableComponent finalName = Component.empty();
+                    // 3. 循环处理每个字符
+                    for (int i = 0; i < rawName.length(); i++) {
+                        // 交替颜色：偶数为白色，奇数为淡紫色（粉色）
+                        ChatFormatting color = (i % 2 == 0) ? ChatFormatting.WHITE : ChatFormatting.LIGHT_PURPLE;
+                        finalName.append(Component.literal(String.valueOf(rawName.charAt(i))).withStyle(color));
+                    }
+                    return finalName;
                 }
             }
     );
