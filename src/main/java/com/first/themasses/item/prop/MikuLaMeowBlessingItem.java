@@ -83,31 +83,3 @@ public class MikuLaMeowBlessingItem extends Item {
         tooltip.add(finalComponent);
     }
 }
-//    @Override
-//    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-//        String rawText = Component.translatable("tooltip.themasses.mikuprop.line1").getString();
-//        MutableComponent finalComponent = Component.empty();
-//
-//        // 1. 获取当前系统时间。除以 50 是为了让速度适中，数字越大变换越慢
-//        long time = System.currentTimeMillis() / 200;
-//
-//        for (int i = 0; i < rawText.length(); i++) {
-//            // 2. 利用正弦函数计算一个 0.0 到 1.0 之间的动态比例
-//            // time 驱动颜色随时间滚动，i * 0.6 产生字与字之间的颜色偏差（波浪感）
-//            float ratio = (float) (Math.sin((time + i * 0.6)) * 0.5 + 0.5);
-//            // 3. 在白色 (255, 255, 255) 和 粉色 (255, 119, 255) 之间进行线性插值 (LERP)
-//            // 红色始终是 255
-//            int red = 255;
-//            // 绿色从 255 变到 119
-//            int green = (int) (255 * (1 - ratio) + 119 * ratio);
-//            // 蓝色始终是 255
-//            int blue = 255;
-//            // 组合成 RGB 颜色
-//            int color = (red << 16) | (green << 8) | blue;
-//            // 4. 追加带颜色的字符
-//            finalComponent.append(Component.literal(String.valueOf(rawText.charAt(i)))
-//                    .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color))));
-//        }
-//
-//        tooltip.add(finalComponent);
-//    }

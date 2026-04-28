@@ -16,7 +16,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
-//按键效果检测
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID, value = Dist.CLIENT)
 public class ClientKeyEvents {
 

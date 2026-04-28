@@ -1,6 +1,9 @@
 package com.first.themasses.events.prop;
 
 import com.core.dream_sakura.attributes.RegistryAttribute;
+import com.core.dream_sakura.client.render.miku_supreme.MikuManager;
+import com.core.dream_sakura.client.render.miku_supreme.MikuSupremeManager;
+import com.core.dream_sakura.client.render.miku_supreme.MikuSupremeCioraStManager;
 import com.first.themasses.item.prop.MikuLaMeowBlessingItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -19,9 +22,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLivingEvent;
-import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -32,7 +32,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 import java.util.UUID;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class MikuLaMeowEvents {
 
@@ -42,32 +42,6 @@ public class MikuLaMeowEvents {
     public static Attribute getMikuSizeAttr() {
         return RegistryAttribute.SCALE.get();
     }
-
-//    @Mod.EventBusSubscriber(modid = "themasses", value = Dist.CLIENT)
-//    public static class ClientEvents {
-//        @SubscribeEvent
-//        public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
-//            Attribute mikuSize = getMikuSizeAttr();
-//            var inst = event.getEntity().getAttribute(mikuSize);
-//            if (inst != null && inst.getValue() != 1.0D) {
-//                float s = (float) inst.getValue();
-//                event.getPoseStack().pushPose();
-//                event.getPoseStack().scale(s, s, s);
-//            }
-//        }
-//
-//        @SubscribeEvent
-//        public static void onRenderPost(RenderLivingEvent.Post<?, ?> event) {
-//            Attribute mikuSize = getMikuSizeAttr();
-//            var inst = event.getEntity().getAttribute(mikuSize);
-//            if (inst != null && inst.getValue() != 1.0D) {
-//                event.getPoseStack().popPose();
-//            }
-//        }
-//    }如果想玩2次放大就弄回来
-
-    // --- 逻辑处理部分（保持原有逻辑，仅更新属性引用） ---
-
     private static boolean isFriendly(LivingEntity target, Player player) {
         if (target == player) return true;
         return target.isAlliedTo(player);
@@ -139,61 +113,31 @@ public class MikuLaMeowEvents {
     }
 
     public static void applySingleBlessing(LivingEntity target, ItemStack stack) {
-        float oldMax = target.getMaxHealth();
-        int upLevel = stack.getOrCreateTag().getInt("UpgradeLevel");
-        int durUp = stack.getOrCreateTag().getInt("DurationUp");
-        int singleLevel = 1 + upLevel;
-        int duration = 400 + (durUp * 200);
-
-        applyCommonEffects(target, duration, singleLevel, true);
-
-        float step = 1.0F + (singleLevel * 0.1F);
-
-        modify(target, Attributes.MAX_HEALTH, 0.5, MIKU_BUFF_ID);
-        modify(target, Attributes.MOVEMENT_SPEED, 0.2 * step, MIKU_BUFF_ID);
-        modify(target, Attributes.ARMOR, 0.2 * step, MIKU_BUFF_ID);
-        modify(target, Attributes.ATTACK_DAMAGE, 0.25 * step, MIKU_BUFF_ID);
-        modify(target, Attributes.ARMOR_TOUGHNESS, 0.25 * step, MIKU_BUFF_ID);
-
-        // 使用 Dream Sakura 属性进行缩放
-        modify(target, getMikuSizeAttr(), 0.25, MIKU_BUFF_ID);
-
-        float addedHealth = target.getMaxHealth() - oldMax;
-        if (addedHealth > 0) {
-            target.setHealth(target.getHealth() + addedHealth);
+        // 第一步：先激活樱花环绕特效（2.5秒 = 50 tick）
+        MikuSupremeCioraStManager.activate(target, 3); // 3秒确保覆盖2.5秒
+        
+        // 第二步：记录延迟激活的时间戳和物品数据
+        if (!target.level().isClientSide) {
+            long activateTime = target.level().getGameTime() + 50; // 2.5秒后激活
+            CompoundTag data = target.getPersistentData();
+            data.putLong("MikuBuffActivateTime_Single", activateTime);
+            data.putInt("PendingUpgradeLevel", stack.getOrCreateTag().getInt("UpgradeLevel"));
+            data.putInt("PendingDurationUp", stack.getOrCreateTag().getInt("DurationUp"));
         }
-
-        target.getPersistentData().putLong("MikuBuffEnd_Single", target.level().getGameTime() + duration);
     }
 
     public static void applyAreaBlessing(LivingEntity target, ItemStack stack) {
-        int upLevel = stack.getOrCreateTag().getInt("UpgradeLevel");
-        int durUp = stack.getOrCreateTag().getInt("DurationUp");
-        float oldMax = target.getMaxHealth();
-        int areaLevel = 0 + upLevel;
-        int duration = 600 + (durUp * 200);
-
-        applyCommonEffects(target, duration, areaLevel, false);
-
-        long currentTime = target.level().getGameTime();
-        CompoundTag data = target.getPersistentData();
-        boolean singleActive = data.contains("MikuBuffEnd_Single") && currentTime <= data.getLong("MikuBuffEnd_Single");
-
-        if (!singleActive) {
-            modify(target, Attributes.MAX_HEALTH, 0.25, MIKU_BUFF_ID);
-            modify(target, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
-            modify(target, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
-
-            // 使用 Dream Sakura 属性进行缩放
-            modify(target, getMikuSizeAttr(), 0.10, MIKU_BUFF_ID);
-
-            float addedHealth = target.getMaxHealth() - oldMax;
-            if (addedHealth > 0) {
-                target.setHealth(target.getHealth() + addedHealth);
-            }
+        // 第一步：先激活樱花环绕特效（2.5秒）
+        MikuSupremeCioraStManager.activate(target, 3);
+        
+        // 第二步：记录延迟激活的时间戳和物品数据
+        if (!target.level().isClientSide) {
+            long activateTime = target.level().getGameTime() + 50; // 2.5秒后激活
+            CompoundTag data = target.getPersistentData();
+            data.putLong("MikuBuffActivateTime_Area", activateTime);
+            data.putInt("PendingUpgradeLevel", stack.getOrCreateTag().getInt("UpgradeLevel"));
+            data.putInt("PendingDurationUp", stack.getOrCreateTag().getInt("DurationUp"));
         }
-
-        target.getPersistentData().putLong("MikuBuffEnd_Area", target.level().getGameTime() + duration);
     }
 
     private static void applyCommonEffects(LivingEntity target, int duration, int levelAmp, boolean isShiftRightClick) {
@@ -222,6 +166,24 @@ public class MikuLaMeowEvents {
         if (!entity.level().isClientSide && entity.tickCount % 20 == 0) {
             long currentTime = entity.level().getGameTime();
             CompoundTag data = entity.getPersistentData();
+
+            // 检查并应用延迟的单体祝福
+            if (data.contains("MikuBuffActivateTime_Single")) {
+                long activateTime = data.getLong("MikuBuffActivateTime_Single");
+                if (currentTime >= activateTime) {
+                    data.remove("MikuBuffActivateTime_Single");
+                    applyDelayedSingleBlessing(entity, data);
+                }
+            }
+
+            // 检查并应用延迟的范围祝福
+            if (data.contains("MikuBuffActivateTime_Area")) {
+                long activateTime = data.getLong("MikuBuffActivateTime_Area");
+                if (currentTime >= activateTime) {
+                    data.remove("MikuBuffActivateTime_Area");
+                    applyDelayedAreaBlessing(entity, data);
+                }
+            }
 
             boolean hasSingle = data.contains("MikuBuffEnd_Single");
             boolean hasArea = data.contains("MikuBuffEnd_Area");
@@ -256,6 +218,67 @@ public class MikuLaMeowEvents {
                 removeModifier(entity, mikuSize, MIKU_BUFF_ID);
             }
         }
+    }
+
+    private static void applyDelayedSingleBlessing(LivingEntity target, CompoundTag data) {
+        // 需要从物品栈获取数据，这里简化处理，假设数据已存储
+        float oldMax = target.getMaxHealth();
+        int upLevel = data.getInt("PendingUpgradeLevel");
+        int durUp = data.getInt("PendingDurationUp");
+        int singleLevel = 1 + upLevel;
+        int duration = 400 + (durUp * 200);
+
+        applyCommonEffects(target, duration, singleLevel, true);
+
+        float step = 1.0F + (singleLevel * 0.1F);
+
+        modify(target, Attributes.MAX_HEALTH, 0.5, MIKU_BUFF_ID);
+        modify(target, Attributes.MOVEMENT_SPEED, 0.2 * step, MIKU_BUFF_ID);
+        modify(target, Attributes.ARMOR, 0.2 * step, MIKU_BUFF_ID);
+        modify(target, Attributes.ATTACK_DAMAGE, 0.25 * step, MIKU_BUFF_ID);
+        modify(target, Attributes.ARMOR_TOUGHNESS, 0.25 * step, MIKU_BUFF_ID);
+        modify(target, getMikuSizeAttr(), 0.25, MIKU_BUFF_ID);
+
+        float addedHealth = target.getMaxHealth() - oldMax;
+        if (addedHealth > 0) {
+            target.setHealth(target.getHealth() + addedHealth);
+        }
+
+        target.getPersistentData().putLong("MikuBuffEnd_Single", target.level().getGameTime() + duration);
+        
+        // 第三步：激活猫爪特效，持续时间与buff一致
+        MikuSupremeManager.activate(target, duration / 20); // 转换为秒
+    }
+
+    private static void applyDelayedAreaBlessing(LivingEntity target, CompoundTag data) {
+        int upLevel = data.getInt("PendingUpgradeLevel");
+        int durUp = data.getInt("PendingDurationUp");
+        float oldMax = target.getMaxHealth();
+        int areaLevel = 0 + upLevel;
+        int duration = 600 + (durUp * 200);
+
+        applyCommonEffects(target, duration, areaLevel, false);
+
+        long currentTime = target.level().getGameTime();
+        CompoundTag persistentData = target.getPersistentData();
+        boolean singleActive = persistentData.contains("MikuBuffEnd_Single") && currentTime <= persistentData.getLong("MikuBuffEnd_Single");
+
+        if (!singleActive) {
+            modify(target, Attributes.MAX_HEALTH, 0.25, MIKU_BUFF_ID);
+            modify(target, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
+            modify(target, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
+            modify(target, getMikuSizeAttr(), 0.10, MIKU_BUFF_ID);
+
+            float addedHealth = target.getMaxHealth() - oldMax;
+            if (addedHealth > 0) {
+                target.setHealth(target.getHealth() + addedHealth);
+            }
+        }
+
+        target.getPersistentData().putLong("MikuBuffEnd_Area", target.level().getGameTime() + duration);
+        
+        // 第三步：激活 Miku 特效，持续时间与buff一致
+        MikuManager.activate(target, duration / 20); // 转换为秒
     }
 
     @SubscribeEvent

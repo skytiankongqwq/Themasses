@@ -10,7 +10,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-    //geck得见天光的苦力怕变化逻辑
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ParadoxCreeperHandler {
 
