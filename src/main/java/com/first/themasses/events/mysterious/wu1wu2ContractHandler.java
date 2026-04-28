@@ -11,6 +11,8 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -176,20 +178,25 @@ public class wu1wu2ContractHandler {
     }
 
     @SubscribeEvent
-    public static void onDeathPrevention(LivingHurtEvent event) {
+    public static void onDeathPrevention(LivingDeathEvent event) {
         if (!wu1wu2EvolutionHandler.isServantConversionEnabled) return;
-
-        if (event.getEntity() instanceof ServerPlayer player && event.getAmount() >= player.getHealth() && hasUnity(player)) {
+        // 直接判断实体是否为玩家，以及是否拥有 Unity 效果/物品
+        if (event.getEntity() instanceof ServerPlayer player && hasUnity(player)) {
             if (player.level() instanceof ServerLevel serverLevel) {
                 SearchServant.getEnhancedServantData(player).ifPresent(data -> {
                     for (UUID uuid : data.servantDetails.keySet()) {
                         Entity entity = serverLevel.getEntity(uuid);
                         if (entity instanceof LivingEntity servant && servant.isAlive()) {
+                            // 1. 取消死亡事件
                             event.setCanceled(true);
-                            player.setHealth(4.0F);
+                            // 2. 玩家状态重置：设置残血并传送至从者位置
+                            player.setHealth(4.0F); // 恢复 2 颗心
                             player.teleportTo(serverLevel, servant.getX(), servant.getY(), servant.getZ(), player.getYRot(), player.getXRot());
-                            servant.hurt(player.damageSources().magic(), Float.MAX_VALUE);
+                            // 3. 从者献祭：使用绝命伤害
+                            servant.hurt(player.damageSources().genericKill(), Float.MAX_VALUE);
+                            // 4. 反馈
                             player.displayClientMessage(Component.literal("§c眷属献祭了自己..."), true);
+                            // 找到一个活着的从者并完成献祭后，跳出循环
                             break;
                         }
                     }

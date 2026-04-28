@@ -1,7 +1,7 @@
 package com.first.themasses.events.prop;
 
+import com.core.dream_sakura.attributes.RegistryAttribute;
 import com.first.themasses.item.prop.MikuLaMeowBlessingItem;
-import com.first.themasses.util.ModAttributes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -15,7 +15,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -30,8 +29,6 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,54 +38,35 @@ public class MikuLaMeowEvents {
 
     private static final UUID MIKU_BUFF_ID = UUID.fromString("6a17b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c");
 
+    // 辅助方法：现在指向 RegistryAttribute.SCALE
     public static Attribute getMikuSizeAttr() {
-        if (ModAttributes.MIKU_SIZE.isPresent()) {
-            return ModAttributes.MIKU_SIZE.get();
-        }
-        return null;
+        return RegistryAttribute.SCALE.get();
     }
 
-    @Mod.EventBusSubscriber(modid = "themasses", bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static class ModEvents {
-        @SubscribeEvent
-        public static void onAttributeModification(EntityAttributeModificationEvent event) {
-            Attribute mikuSize = getMikuSizeAttr();
-            if (mikuSize != null) {
-                event.getTypes().forEach(type -> {
-                    if (!event.has(type, mikuSize)) {
-                        event.add(type, mikuSize);
-                    }
-                });
-            }
-        }
-    }
+//    @Mod.EventBusSubscriber(modid = "themasses", value = Dist.CLIENT)
+//    public static class ClientEvents {
+//        @SubscribeEvent
+//        public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
+//            Attribute mikuSize = getMikuSizeAttr();
+//            var inst = event.getEntity().getAttribute(mikuSize);
+//            if (inst != null && inst.getValue() != 1.0D) {
+//                float s = (float) inst.getValue();
+//                event.getPoseStack().pushPose();
+//                event.getPoseStack().scale(s, s, s);
+//            }
+//        }
+//
+//        @SubscribeEvent
+//        public static void onRenderPost(RenderLivingEvent.Post<?, ?> event) {
+//            Attribute mikuSize = getMikuSizeAttr();
+//            var inst = event.getEntity().getAttribute(mikuSize);
+//            if (inst != null && inst.getValue() != 1.0D) {
+//                event.getPoseStack().popPose();
+//            }
+//        }
+//    }如果想玩2次放大就弄回来
 
-    @Mod.EventBusSubscriber(modid = "themasses", value = Dist.CLIENT)
-    public static class ClientEvents {
-        @SubscribeEvent
-        public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
-            Attribute mikuSize = getMikuSizeAttr();
-            if (mikuSize != null) {
-                var inst = event.getEntity().getAttribute(mikuSize);
-                if (inst != null && inst.getValue() != 1.0D) {
-                    float s = (float) inst.getValue();
-                    event.getPoseStack().pushPose();
-                    event.getPoseStack().scale(s, s, s);
-                }
-            }
-        }
-
-        @SubscribeEvent
-        public static void onRenderPost(RenderLivingEvent.Post<?, ?> event) {
-            Attribute mikuSize = getMikuSizeAttr();
-            if (mikuSize != null) {
-                var inst = event.getEntity().getAttribute(mikuSize);
-                if (inst != null && inst.getValue() != 1.0D) {
-                    event.getPoseStack().popPose();
-                }
-            }
-        }
-    }
+    // --- 逻辑处理部分（保持原有逻辑，仅更新属性引用） ---
 
     private static boolean isFriendly(LivingEntity target, Player player) {
         if (target == player) return true;
@@ -109,14 +87,14 @@ public class MikuLaMeowEvents {
 
             if (player.isCrouching()) {
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.CAT_BEG_FOR_FOOD, SoundSource.PLAYERS, 4.0F, 1.2F);
+                        SoundEvents.CAT_AMBIENT, SoundSource.PLAYERS, 4.0F, 1.2F);
                 if (!player.level().isClientSide) {
                     applySingleBlessing(target, stack);
                     player.getCooldowns().addCooldown(stack.getItem(), 800 - (cdUp * 100));
                 }
             } else {
                 player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.CAT_PURREOW, SoundSource.PLAYERS, 4.0F, 1.0F);
+                        SoundEvents.CAT_AMBIENT, SoundSource.PLAYERS, 4.0F, 1.0F);
                 if (!player.level().isClientSide) {
                     triggerAreaBlessing(player, player.level(), stack);
                     player.getCooldowns().addCooldown(stack.getItem(), 600 - (cdUp * 100));
@@ -171,16 +149,14 @@ public class MikuLaMeowEvents {
 
         float step = 1.0F + (singleLevel * 0.1F);
 
-        // 修改点 1：血量提升固定为 50%，不再乘以 step 变量
         modify(target, Attributes.MAX_HEALTH, 0.5, MIKU_BUFF_ID);
-
         modify(target, Attributes.MOVEMENT_SPEED, 0.2 * step, MIKU_BUFF_ID);
         modify(target, Attributes.ARMOR, 0.2 * step, MIKU_BUFF_ID);
         modify(target, Attributes.ATTACK_DAMAGE, 0.25 * step, MIKU_BUFF_ID);
         modify(target, Attributes.ARMOR_TOUGHNESS, 0.25 * step, MIKU_BUFF_ID);
 
-        Attribute mikuSize = getMikuSizeAttr();
-        if (mikuSize != null) modify(target, mikuSize, 0.25, MIKU_BUFF_ID);
+        // 使用 Dream Sakura 属性进行缩放
+        modify(target, getMikuSizeAttr(), 0.25, MIKU_BUFF_ID);
 
         float addedHealth = target.getMaxHealth() - oldMax;
         if (addedHealth > 0) {
@@ -208,8 +184,8 @@ public class MikuLaMeowEvents {
             modify(target, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
             modify(target, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
 
-            Attribute mikuSize = getMikuSizeAttr();
-            if (mikuSize != null) modify(target, mikuSize, 0.10, MIKU_BUFF_ID);
+            // 使用 Dream Sakura 属性进行缩放
+            modify(target, getMikuSizeAttr(), 0.10, MIKU_BUFF_ID);
 
             float addedHealth = target.getMaxHealth() - oldMax;
             if (addedHealth > 0) {
@@ -230,16 +206,11 @@ public class MikuLaMeowEvents {
             target.addEffect(new MobEffectInstance(MobEffects.REGENERATION, duration, levelAmp));
         }
 
-        // 修改点 2：庇护 (Asylum) - 右键一级(amp 0)，蹲下右键二级(amp 1)，不可升级
         int asylumAmp = isShiftRightClick ? 1 : 0;
         addEffectIfPresent(target, "more_potion_effects:asylum", duration, asylumAmp);
-
         addEffectIfPresent(target, "goety:deflective", duration, Math.min(2, levelAmp));
 
         if (isShiftRightClick) {
-            // 修改点 3：护佑 (Shielding) - 仅限蹲下右键。
-            // 当传入的 levelAmp 基础为 1（即单体祝福 1 + upLevel）时，amp 为 1（二级）。
-            // 当 upLevel 为 2，levelAmp 为 3 时，amp 达到上限 3（四级）。
             addEffectIfPresent(target, "goety:shielding", duration, Math.min(3, levelAmp));
             addEffectIfPresent(target, "goety:rallying", duration, Math.min(1, levelAmp));
         }
@@ -265,7 +236,7 @@ public class MikuLaMeowEvents {
                     modify(entity, Attributes.MAX_HEALTH, 0.25, MIKU_BUFF_ID);
                     modify(entity, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
                     modify(entity, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
-                    if (mikuSize != null) modify(entity, mikuSize, 0.10, MIKU_BUFF_ID);
+                    modify(entity, mikuSize, 0.10, MIKU_BUFF_ID);
 
                     removeModifier(entity, Attributes.MOVEMENT_SPEED, MIKU_BUFF_ID);
                     removeModifier(entity, Attributes.ARMOR_TOUGHNESS, MIKU_BUFF_ID);
@@ -282,7 +253,7 @@ public class MikuLaMeowEvents {
                 removeModifier(entity, Attributes.ARMOR, MIKU_BUFF_ID);
                 removeModifier(entity, Attributes.ATTACK_DAMAGE, MIKU_BUFF_ID);
                 removeModifier(entity, Attributes.ARMOR_TOUGHNESS, MIKU_BUFF_ID);
-                if (mikuSize != null) removeModifier(entity, mikuSize, MIKU_BUFF_ID);
+                removeModifier(entity, mikuSize, MIKU_BUFF_ID);
             }
         }
     }
@@ -309,7 +280,6 @@ public class MikuLaMeowEvents {
             }
         }
     }
-
 
     private static void removeModifier(LivingEntity e, Attribute a, UUID u) {
         var i = e.getAttribute(a);

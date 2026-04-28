@@ -31,7 +31,7 @@ public class ModEntities {
                             .clientTrackingRange(4)
                             .updateInterval(10)
                             .build("smallfire_ball"));
-    // --- 新增：虚空刺杀者投影 ---
+    // 龙心枪投影
     public static final RegistryObject<EntityType<VoidPiercerProjectileEntity>> VOID_PIERCER_PROJECTILE =
             ENTITY_TYPES.register("void_piercer_projectile",
                     () -> EntityType.Builder.<VoidPiercerProjectileEntity>of(VoidPiercerProjectileEntity::new, MobCategory.MISC)
@@ -39,6 +39,14 @@ public class ModEntities {
                             .clientTrackingRange(4)
                             .updateInterval(20)
                             .build("void_piercer_projectile"));
+    //糖球
+    public static final RegistryObject<EntityType<ThrownSugarBall>> THROWN_SUGAR_BALL =
+            ENTITY_TYPES.register("thrown_sugar_ball",
+                    () -> EntityType.Builder.<ThrownSugarBall>of(ThrownSugarBall::new, MobCategory.MISC)
+                            .sized(0.25F, 0.25F) // 投掷物通常较小，参考雪球大小
+                            .clientTrackingRange(4)
+                            .updateInterval(10) // 投掷物需要较高的同步频率
+                            .build("thrown_sugar_ball"));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

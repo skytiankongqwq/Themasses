@@ -152,6 +152,8 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     // Compile against only the API artifact
     implementation fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}")
+
+    implementation fg.deobf("blank:dream_sakura:0.0.2_data_fix_1")
     //goety
     implementation fg.deobf("curse.maven:goety-586095:7284580")
     compileOnly fg.deobf("curse.maven:goety-586095:7284580")
