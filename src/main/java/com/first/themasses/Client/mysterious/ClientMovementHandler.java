@@ -1,4 +1,4 @@
-package com.first.themasses.Client;
+package com.first.themasses.Client.mysterious;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.ai.attributes.Attributes;

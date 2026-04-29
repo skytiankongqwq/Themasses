@@ -11,14 +11,34 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
-@SuppressWarnings("removal")
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID, value = Dist.CLIENT)
 public class ClientKeyEvents {
+
+    // 使用 Map 存储：饰品类 -> 数据包ID
+    // 使用 LinkedHashMap 保证遍历顺序（如果你对触发优先级有要求）
+    private static final Map<Class<? extends Item>, Integer> ABILITY_REGISTRY = new LinkedHashMap<>();
+
+    static {
+        ABILITY_REGISTRY.put(XiaoArin.class, -888);
+        ABILITY_REGISTRY.put(Playerseven.class, -777);
+        ABILITY_REGISTRY.put(KunZhong.class, -999);
+        ABILITY_REGISTRY.put(Baizeli.class, -666);
+        ABILITY_REGISTRY.put(Duvacein.class, -555);
+        ABILITY_REGISTRY.put(XIN_TIRIS.class, -444);
+        ABILITY_REGISTRY.put(MarbleShardItem.class, -5152);
+        ABILITY_REGISTRY.put(haozi.class, -333);
+        ABILITY_REGISTRY.put(wu1wu2.class, -51);
+    }
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
@@ -28,79 +48,35 @@ public class ClientKeyEvents {
             Player player = Minecraft.getInstance().player;
             if (player == null) return;
 
-            // 标记位：用于判断最后是否需要执行“准星目标”逻辑
             boolean anyAbilityTriggered = false;
 
-            // --- 情况 1: Shift + R (切换戒指模式) ---
+            // 1. 特殊逻辑：Shift + R (保持独立处理，因为涉及按键状态判断)
             if (Screen.hasShiftDown()) {
-                if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof heishatangring).isPresent()) {
+                if (isEquipped(player, heishatangring.class)) {
                     ModMessages.sendToServer(new PacketAbilityKey(-2));
                     anyAbilityTriggered = true;
                 }
             }
 
-            // --- 情况 2: 常规触发 (全部改为独立 if，实现同步发包) ---
-
-            // 1. XiaoArin (-888)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XiaoArin).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-888));
-                anyAbilityTriggered = true;
+            // 2. 自动化逻辑：遍历 Map 自动检查并发包
+            for (Map.Entry<Class<? extends Item>, Integer> entry : ABILITY_REGISTRY.entrySet()) {
+                if (isEquipped(player, entry.getKey())) {
+                    ModMessages.sendToServer(new PacketAbilityKey(entry.getValue()));
+                    anyAbilityTriggered = true;
+                }
             }
 
-            // 2. Player7 (-777)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof Playerseven).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-777));
-                anyAbilityTriggered = true;
-            }
-
-            // 3. 昆仲饰品 (-999)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof KunZhong).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-999));
-                anyAbilityTriggered = true;
-            }
-
-            // 4. Baizeli (-666)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof Baizeli).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-666));
-                anyAbilityTriggered = true;
-            }
-
-            // 5. Duvacein (-555)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof Duvacein).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-555));
-                anyAbilityTriggered = true;
-            }
-
-            // 6. XIN_TIRIS (-444)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XIN_TIRIS).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-444));
-                anyAbilityTriggered = true;
-            }
-
-            // 7. 大理石碎片 (-5152)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof MarbleShardItem).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-5152));
-                anyAbilityTriggered = true;
-            }
-
-            // 8. haozi (-333)
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof haozi).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-333));
-                anyAbilityTriggered = true;
-            }
-
-            if (CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof wu1wu2).isPresent()) {
-                ModMessages.sendToServer(new PacketAbilityKey(-51)); // 发送特殊 ID
-                anyAbilityTriggered = true;
-            }
-
-            // --- 情况 3: 默认兜底逻辑 ---
-            // 只有当以上任何一件饰品都没穿时，才触发准星目标判定
+            // 3. 兜底逻辑
             if (!anyAbilityTriggered) {
                 Entity target = Minecraft.getInstance().crosshairPickEntity;
                 int targetId = (target != null) ? target.getId() : -1;
                 ModMessages.sendToServer(new PacketAbilityKey(targetId));
             }
         }
+    }
+
+    private static boolean isEquipped(Player player, Class<? extends Item> itemClass) {
+        return CuriosApi.getCuriosHelper().findFirstCurio(player,
+                stack -> itemClass.isInstance(stack.getItem())).isPresent();
     }
 }

@@ -47,6 +47,29 @@ public class MikuLaMeowEvents {
         return target.isAlliedTo(player);
     }
 
+//@Mod.EventBusSubscriber(modid = "themasses", value = Dist.CLIENT)
+//    public static class ClientEvents {
+//        @SubscribeEvent
+//        public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
+//            Attribute mikuSize = getMikuSizeAttr();
+//            var inst = event.getEntity().getAttribute(mikuSize);
+//            if (inst != null && inst.getValue() != 1.0D) {
+//                float s = (float) inst.getValue();
+//                event.getPoseStack().pushPose();
+//                event.getPoseStack().scale(s, s, s);
+//            }
+//        }
+//
+//        @SubscribeEvent
+//        public static void onRenderPost(RenderLivingEvent.Post<?, ?> event) {
+//            Attribute mikuSize = getMikuSizeAttr();
+//            var inst = event.getEntity().getAttribute(mikuSize);
+//            if (inst != null && inst.getValue() != 1.0D) {
+//                event.getPoseStack().popPose();
+//            }
+//        }
+//    }如果想玩2次放大就弄回来
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
