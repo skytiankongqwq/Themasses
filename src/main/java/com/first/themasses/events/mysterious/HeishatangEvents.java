@@ -278,23 +278,37 @@ public class HeishatangEvents {
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
         if (level.isClientSide) return;
 
+        // --- 修改后的逻辑 ---
         if (player.isShiftKeyDown()) {
-            CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof heishatang).ifPresent(slot -> {
-                CompoundTag tag = slot.stack().getOrCreateTag();
-                int current = tag.getInt("UseMode");
-                int next = (current == 0) ? 1 : 0;
-                tag.putInt("UseMode", next);
+            // 获取玩家手上的物品
+            ItemStack heldItem = player.getItemInHand(event.getHand());
 
-                String modeName = (next == 1 ? "【绿宝石块】(消耗9能量)" : "【绿宝石】(消耗1能量)");
-                player.displayClientMessage(Component.literal("能力模式切换 -> " + modeName).withStyle(ChatFormatting.GOLD), true);
-            });
-            event.setCanceled(true);
-            return;
+            // 关键判定：只有当手上拿着黑砂糖时，才执行切换逻辑并取消事件
+            if (heldItem.getItem() instanceof heishatang) {
+                CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof heishatang).ifPresent(slot -> {
+                    CompoundTag tag = slot.stack().getOrCreateTag();
+                    int current = tag.getInt("UseMode");
+                    int next = (current == 0) ? 1 : 0;
+                    tag.putInt("UseMode", next);
+
+                    String modeName = (next == 1 ? "【绿宝石块】(消耗9能量)" : "【绿宝石】(消耗1能量)");
+                    player.displayClientMessage(Component.literal("能力模式切换 -> " + modeName).withStyle(ChatFormatting.GOLD), true);
+                });
+
+                // 只有匹配成功才取消事件
+                event.setCanceled(true);
+                return;
+            }
         }
 
+        // 骑乘逻辑 (保持不变)
         CompoundTag nbt = event.getTarget().getPersistentData();
         if (nbt.getLong("HeishatangFollowEnd") > level.getGameTime()) {
-            if (player.getUUID().equals(nbt.getUUID("HeishatangOwner"))) player.startRiding(event.getTarget());
+            if (player.getUUID().equals(nbt.getUUID("HeishatangOwner"))) {
+                player.startRiding(event.getTarget());
+                // 建议：骑乘成功也取消事件，防止触发其他右键行为
+                event.setCanceled(true);
+            }
         }
     }
 
