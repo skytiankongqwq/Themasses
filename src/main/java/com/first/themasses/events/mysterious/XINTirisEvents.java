@@ -18,10 +18,17 @@ public class XINTirisEvents {
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity victim = event.getEntity();
 
-        // 1. 被动防御逻辑 (限伤 6%)
+        // 1. 被动防御逻辑 (限伤 6% + 负面种类%，最大36%)
         if (victim instanceof Player player) {
             CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XIN_TIRIS).ifPresent(slot -> {
-                float maxAllowed = player.getMaxHealth() * 0.06F;
+                int types = 0;
+                var tag = slot.stack().getTagElement("RecordedNegativeEffects");
+                if (tag != null) {
+                    types = tag.getAllKeys().size();
+                }
+
+                float limitPercent = Math.min(0.06F + (types * 0.01F), 0.36F);
+                float maxAllowed = player.getMaxHealth() * limitPercent;
                 if (event.getAmount() > maxAllowed) {
                     event.setAmount(maxAllowed);
                 }
@@ -30,9 +37,6 @@ public class XINTirisEvents {
 
         // 2. 主动攻击倍率逻辑
         if (event.getSource().getEntity() instanceof Player attacker && event.getSource().is(DamageTypes.PLAYER_ATTACK)) {
-
-            // 【关键修改 1】利用 PersistentData 制作一个“单次事件防重写锁”
-            // 某些模组会多次调用伤害函数，这里确保每个 DamageSource 只被翻倍一次
             if (victim.getPersistentData().getBoolean("XINTirisProcessed")) {
                 return;
             }
@@ -49,13 +53,8 @@ public class XINTirisEvents {
 
                     if (types > 0 && totalLevel > 0) {
                         float multiplier = (float) types * totalLevel;
-
-                        // 【关键修改 2】标记处理状态
                         victim.getPersistentData().putBoolean("XINTirisProcessed", true);
-
-                        // 直接修改当前伤害数值，不再额外乘算。
-                        // 如果你发现还是多乘了，请检查是否在其他类（比如 XIN_TIRIS 原类）里还留着旧的事件监听。
-                        event.setAmount(event.getAmount() * multiplier);
+                        event.setAmount(event.getAmount() + multiplier);
                     }
                 }
             });

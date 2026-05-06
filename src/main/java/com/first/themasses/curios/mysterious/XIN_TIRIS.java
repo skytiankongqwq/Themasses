@@ -12,6 +12,9 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -35,6 +38,8 @@ import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 
 import java.util.List;
+import java.util.UUID;
+
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class XIN_TIRIS extends Item {
@@ -76,17 +81,31 @@ public class XIN_TIRIS extends Item {
                     for (String key : tag.getAllKeys()) {
                         totalLevel += (tag.getInt(key) + 1);
                     }
-
-                    List<Mob> haters = player.level().getEntitiesOfClass(Mob.class, player.getBoundingBox().inflate(16.0),
-                            mob -> mob instanceof Enemy && mob.getTarget() == player);
-
                     if (types > 0 && totalLevel > 0) {
-                        float healAmount = (haters.size() + totalLevel) * types;
+                        float healPercent = 0.001F * types;
+                        float healFlat = 0.1F * totalLevel;
+                        float maxHealth = player.getMaxHealth();
+                        float healAmount = maxHealth * healPercent + healFlat;
                         if (healAmount > 0) player.heal(healAmount);
                     }
 
                     Vec3 look = player.getViewVector(1.0F);
                     if (look.y > 0.9) player.heal(6.0F);
+
+                    AttributeInstance atkInst = player.getAttribute(Attributes.ATTACK_DAMAGE);
+                    if (atkInst != null) {
+                        UUID uuid = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+                        AttributeModifier existing = atkInst.getModifier(uuid);
+                        if (existing != null) atkInst.removeModifier(uuid);
+                        if (types > 0) {
+                            atkInst.addPermanentModifier(new AttributeModifier(
+                                    uuid,
+                                    "xin_tiris_attack_bonus",
+                                    types,
+                                    AttributeModifier.Operation.ADDITION
+                            ));
+                        }
+                    }
                 }
             }
         };
@@ -100,9 +119,6 @@ public class XIN_TIRIS extends Item {
         };
     }
 
-    /**
-     * 主动技能：根据血量差造成伤害（对非玩家全额，对玩家限伤6%）
-     */
     public static void executeXINTirisSkill(ServerPlayer player) {
         var curioStackOpt = CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XIN_TIRIS);
         if (curioStackOpt.isEmpty()) return;
@@ -126,8 +142,6 @@ public class XIN_TIRIS extends Item {
         for (LivingEntity target : targets) {
             if (target == player) continue;
             float finalDamage = Math.abs(player.getHealth() - target.getHealth());
-
-            // 此处主动调用也会触发下方的 onLivingHurt 事件，从而自动执行 6% 限伤逻辑
             target.hurt(player.damageSources().playerAttack(player), finalDamage);
         }
 

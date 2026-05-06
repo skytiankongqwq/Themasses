@@ -8,6 +8,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
@@ -26,37 +28,11 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = "themasses")
 public class wu1wu2ContractHandler {
 
-    /**
-     * 【新增】主动右键转化方法
-     * 只要玩家拥有饰品，右键任何非玩家生物都会尝试建立契约
-     */
-    @SubscribeEvent
-    public static void onRightClickEntity(PlayerInteractEvent.EntityInteract event) {
-        if (!wu1wu2EvolutionHandler.isServantConversionEnabled) return;
-
-        // 仅在服务端处理，且必须是主手操作（防止触发两次）
-        if (event.getLevel().isClientSide || event.getHand() != InteractionHand.MAIN_HAND) return;
-
-        Player player = event.getEntity();
-        Entity target = event.getTarget();
-
-        if (player instanceof ServerPlayer serverPlayer && target instanceof LivingEntity livingTarget) {
-            if (hasUnity(serverPlayer)) {
-                // 如果已经是仆从了，就不重复转化
-                if (livingTarget.getPersistentData().getBoolean("IsSentientServant")) {
-                    return;
-                }
-
-                // 尝试转化，如果转化或驯服成功，才取消原版右键事件（避免影响不能转化的生物，如骑猪）
-                if (tryContract(livingTarget, serverPlayer)) {
-                    event.setCanceled(true);
-                }
-            }
-        }
-    }
+    private static final String CONTRACT_ATTEMPTED_TAG = "UnityContractAttempted";
 
     /**
-     * 被动触发（仇恨触发）：当怪物盯上玩家时自动转化
+     * 被动触发（仇恨触发）：当怪物盯上玩家时尝试转化
+     * 每个实体只判定一次，直到玩家与该实体互动
      */
     @SubscribeEvent
     public static void onTarget(LivingChangeTargetEvent event) {
@@ -66,16 +42,134 @@ public class wu1wu2ContractHandler {
         LivingEntity target = event.getNewTarget();
 
         if (target instanceof ServerPlayer player && hasUnity(player)) {
-            if (attacker.getPersistentData().getBoolean("IsSentientServant") ||
-                    attacker.getPersistentData().getBoolean("HasGrantedUnityN")) {
+            // 如果已经是仆从了，跳过
+            if (attacker.getPersistentData().getBoolean("IsSentientServant")) {
                 return;
             }
 
-            // 如果转化或驯服成功，才清除怪物的仇恨。如果无法转化，怪物会继续攻击玩家
-            if (tryContract(attacker, player)) {
-                event.setNewTarget(null);
+            // 检查是否已经尝试过契约（防止重复判定）
+            if (attacker.getPersistentData().getBoolean(CONTRACT_ATTEMPTED_TAG)) {
+                return;
+            }
+
+            // 标记已尝试过契约
+            attacker.getPersistentData().putBoolean(CONTRACT_ATTEMPTED_TAG, true);
+
+            // 基于属性总和进行概率判定
+            if (shouldConvert(attacker, player)) {
+                // 如果转化或驯服成功，清除怪物的仇恨
+                if (tryContract(attacker, player)) {
+                    event.setNewTarget(null);
+                }
             }
         }
+    }
+
+    /**
+     * 玩家攻击实体时重置契约判定标记
+     */
+    @SubscribeEvent
+    public static void onPlayerAttack(LivingHurtEvent event) {
+        if (!wu1wu2EvolutionHandler.isServantConversionEnabled) return;
+
+        if (event.getSource().getEntity() instanceof ServerPlayer player && hasUnity(player)) {
+            LivingEntity target = event.getEntity();
+            // 重置该实体的契约判定标记，允许再次判定
+            target.getPersistentData().remove(CONTRACT_ATTEMPTED_TAG);
+        }
+    }
+
+    /**
+     * 玩家右键实体时重置契约判定标记并尝试转化
+     */
+    @SubscribeEvent
+    public static void onRightClickEntity(PlayerInteractEvent.EntityInteract event) {
+        if (!wu1wu2EvolutionHandler.isServantConversionEnabled) return;
+
+        // 仅在服务端处理，且必须是主手操作
+        if (event.getLevel().isClientSide || event.getHand() != InteractionHand.MAIN_HAND) return;
+
+        Player player = event.getEntity();
+        Entity target = event.getTarget();
+
+        if (player instanceof ServerPlayer serverPlayer && target instanceof LivingEntity livingTarget) {
+            if (hasUnity(serverPlayer)) {
+                // 如果已经是仆从了，不重复转化
+                if (livingTarget.getPersistentData().getBoolean("IsSentientServant")) {
+                    return;
+                }
+
+                // 重置契约判定标记
+                livingTarget.getPersistentData().remove(CONTRACT_ATTEMPTED_TAG);
+
+                // 基于属性总和进行概率判定
+                if (shouldConvert(livingTarget, serverPlayer)) {
+                    // 尝试转化，如果成功则取消原版右键事件
+                    if (tryContract(livingTarget, serverPlayer)) {
+                        event.setCanceled(true);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 计算是否应该转化：基于双方属性总和的概率判定
+     * 概率公式：0.1 + 玩家总和 / (对方总和 * 10)
+     * 幸运值影响：每点幸运增加 0.2 的转化率
+     */
+    private static boolean shouldConvert(LivingEntity target, ServerPlayer player) {
+        double playerTotal = calculateEntityTotalStats(player);
+        double targetTotal = calculateEntityTotalStats(target);
+
+        // 避免除以零
+        if (targetTotal <= 0) {
+            return true;
+        }
+
+        // 基础概率：0.1 + 玩家总和 / (对方总和 * 10)
+        double baseProbability = 0.1 + playerTotal / (targetTotal * 10);
+
+        // 幸运值加成：每点幸运增加 0.2
+        AttributeInstance luckAttr = player.getAttribute(Attributes.LUCK);
+        double luckBonus = 0;
+        if (luckAttr != null) {
+            luckBonus = luckAttr.getValue() * 0.2;
+        }
+
+        double finalProbability = Math.min(baseProbability + luckBonus, 1.0);
+
+        // 随机判定
+        return player.getRandom().nextDouble() < finalProbability;
+    }
+
+    /**
+     * 计算实体的属性总和：血上限 + 攻击力 + 盔甲值 + 韧性
+     */
+    private static double calculateEntityTotalStats(LivingEntity entity) {
+        double total = 0;
+
+        AttributeInstance maxHealth = entity.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            total += maxHealth.getValue();
+        }
+
+        AttributeInstance attackDamage = entity.getAttribute(Attributes.ATTACK_DAMAGE);
+        if (attackDamage != null) {
+            total += attackDamage.getValue();
+        }
+
+        AttributeInstance armor = entity.getAttribute(Attributes.ARMOR);
+        if (armor != null) {
+            total += armor.getValue();
+        }
+
+        AttributeInstance toughness = entity.getAttribute(Attributes.ARMOR_TOUGHNESS);
+        if (toughness != null) {
+            total += toughness.getValue();
+        }
+
+        return total;
     }
 
     /**
@@ -187,16 +281,11 @@ public class wu1wu2ContractHandler {
                     for (UUID uuid : data.servantDetails.keySet()) {
                         Entity entity = serverLevel.getEntity(uuid);
                         if (entity instanceof LivingEntity servant && servant.isAlive()) {
-                            // 1. 取消死亡事件
                             event.setCanceled(true);
-                            // 2. 玩家状态重置：设置残血并传送至从者位置
-                            player.setHealth(4.0F); // 恢复 2 颗心
+                            player.setHealth(4.0F);
                             player.teleportTo(serverLevel, servant.getX(), servant.getY(), servant.getZ(), player.getYRot(), player.getXRot());
-                            // 3. 从者献祭：使用绝命伤害
                             servant.hurt(player.damageSources().genericKill(), Float.MAX_VALUE);
-                            // 4. 反馈
                             player.displayClientMessage(Component.literal("§c眷属献祭了自己..."), true);
-                            // 找到一个活着的从者并完成献祭后，跳出循环
                             break;
                         }
                     }

@@ -94,7 +94,7 @@ public class wu1wu2EvolutionHandler {
             int n = wu1wu2DataManager.getPermanentN(attacker);
             if (n > 0) {
                 float multiplier = (float) getLog2Multiplier(n);
-                event.setAmount(event.getAmount() * (1.0F + multiplier));
+                event.setAmount(event.getAmount() * (1.0F + multiplier/2));
                 victim.getPersistentData().putInt("SentientVulnerability", n);
             }
         }
@@ -110,14 +110,13 @@ public class wu1wu2EvolutionHandler {
         if (victim.getPersistentData().contains("SentientVulnerability")) {
             int n = victim.getPersistentData().getInt("SentientVulnerability");
             double vulnerability = getLog2Multiplier(n);
-            event.setAmount((float) (event.getAmount() * (1.0 + vulnerability)));
+            event.setAmount((float) (event.getAmount() * (1.0 + vulnerability/2)));
         }
     }
 
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onBeingDamage(LivingDamageEvent event){
         LivingEntity victim = event.getEntity();
-        Entity source = event.getSource().getEntity();
 
         if (victim instanceof Player player && hasUnity(player)) {
             int n = wu1wu2DataManager.getPermanentN(player);
@@ -293,6 +292,8 @@ public class wu1wu2EvolutionHandler {
             updateIronsAttr(player, "spell_power", 1.0 + (bonus * 0.01));
             updateIronsAttr(player, "cooldown_reduction", Math.min(bonus * 0.001 + 1, 3));
             updateIronsAttr(player, "cast_time_reduction", Math.min(bonus * 0.001 + 1, 3));
+            updateIronsAttr(player, "mana_regen", Math.min(bonus * 0.001 + 1, 3));
+            updateIronsAttr(player, "mana_resist", Math.min(bonus * 0.001 + 1, 3));
         } catch (Exception ignored) {}
     }
 
