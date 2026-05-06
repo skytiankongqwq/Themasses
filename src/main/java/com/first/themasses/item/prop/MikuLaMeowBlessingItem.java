@@ -1,6 +1,5 @@
 package com.first.themasses.item.prop;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -17,55 +16,60 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 public class MikuLaMeowBlessingItem extends Item {
+
+    // 定义强化规则：材料 -> (NBT键, 变化值, 最大上限)
+    private static final Map<Item, UpgradeRule> UPGRADE_RULES = Map.ofEntries(
+            Map.entry(Items.REDSTONE_BLOCK,  new UpgradeRule("UpgradeLevel", 1, 2)),
+            Map.entry(Items.REDSTONE,        new UpgradeRule("UpgradeLevel", -1, 2)),
+            Map.entry(Items.GLOWSTONE,       new UpgradeRule("DurationUp", 1, 5)),
+            Map.entry(Items.GLOWSTONE_DUST,  new UpgradeRule("DurationUp", -1, 5)),
+            Map.entry(Items.IRON_BLOCK,      new UpgradeRule("CooldownUp", 1, 5)),
+            Map.entry(Items.IRON_INGOT,      new UpgradeRule("CooldownUp", -1, 5)),
+            Map.entry(Items.GOLD_BLOCK,      new UpgradeRule("RangeUpgrade", 1, 3)),
+            Map.entry(Items.GOLD_INGOT,      new UpgradeRule("RangeUpgrade", -1, 3))
+    );
+
     public MikuLaMeowBlessingItem(Properties properties) {
         super(properties.stacksTo(1));
     }
 
-    /**
-     * 处理在物品栏中，玩家拿着其他物品右键点击这把法杖的逻辑
-     */
     @Override
     public boolean overrideOtherStackedOnMe(ItemStack pStack, ItemStack pOther, Slot pSlot, ClickAction pAction, Player pPlayer, SlotAccess pAccess) {
         if (pAction == ClickAction.SECONDARY && !pOther.isEmpty()) {
-            CompoundTag tag = pStack.getOrCreateTag();
-            boolean changed = false;
+            // 直接从映射表中获取规则
+            UpgradeRule rule = UPGRADE_RULES.get(pOther.getItem());
 
-            // 1. 等级强化 (红石块 +1, 红石粉 -1)，最高强化 2 次 (到达右键3级/Shift4级)
-            if (pOther.is(Items.REDSTONE_BLOCK)) {
-                int lvl = tag.getInt("UpgradeLevel");
-                if (lvl < 2) { tag.putInt("UpgradeLevel", lvl + 1); changed = true; }
-            } else if (pOther.is(Items.REDSTONE)) {
-                int lvl = tag.getInt("UpgradeLevel");
-                if (lvl > 0) { tag.putInt("UpgradeLevel", lvl - 1); changed = true; }
-            }
-            // 2. 时间强化 (萤石 +1, 萤石粉 -1)，最高强化 5 次 (+50s)
-            else if (pOther.is(Items.GLOWSTONE)) {
-                int dur = tag.getInt("DurationUp");
-                if (dur < 5) { tag.putInt("DurationUp", dur + 1); changed = true; }
-            } else if (pOther.is(Items.GLOWSTONE_DUST)) {
-                int dur = tag.getInt("DurationUp");
-                if (dur > 0) { tag.putInt("DurationUp", dur - 1); changed = true; }
-            }
-            // 3. 冷却缩减 (铁块 +1, 铁锭 -1)，最高强化 5 次 (-25s)
-            else if (pOther.is(Items.IRON_BLOCK)) {
-                int cd = tag.getInt("CooldownUp");
-                if (cd < 5) { tag.putInt("CooldownUp", cd + 1); changed = true; }
-            } else if (pOther.is(Items.IRON_INGOT)) {
-                int cd = tag.getInt("CooldownUp");
-                if (cd > 0) { tag.putInt("CooldownUp", cd - 1); changed = true; }
-            }
-
-            // 如果强化成功，消耗材料并播放音效
-            if (changed) {
-                pOther.shrink(1); // 消耗一个材料
-                pPlayer.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 0.6F, 1.2F);
-                return true; // 拦截原生点击事件
+            if (rule != null) {
+                CompoundTag tag = pStack.getOrCreateTag();
+                if (applyUpgrade(tag, rule)) {
+                    pOther.shrink(1);
+                    pPlayer.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 0.6F, 1.2F);
+                    return true;
+                }
             }
         }
         return super.overrideOtherStackedOnMe(pStack, pOther, pSlot, pAction, pPlayer, pAccess);
     }
+
+    /**
+     * 核心逻辑：应用强化并返回是否成功
+     */
+    private boolean applyUpgrade(CompoundTag tag, UpgradeRule rule) {
+        int current = tag.getInt(rule.nbtKey);
+        int next = current + rule.amount;
+
+        if (next >= 0 && next <= rule.maxLimit && next != current) {
+            tag.putInt(rule.nbtKey, next);
+            return true;
+        }
+        return false;
+    }
+
+    // 内部数据类
+    private record UpgradeRule(String nbtKey, int amount, int maxLimit) {}
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {

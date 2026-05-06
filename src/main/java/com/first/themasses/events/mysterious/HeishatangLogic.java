@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 //黑砂糖击杀掉落
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID)
 public class HeishatangLogic {
 

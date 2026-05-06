@@ -27,9 +27,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 
-
 // 注册物品
-public class    ModItems {
+public class ModItems {
 
     // 创建一个延迟注册器，用于注册物品
     public static final DeferredRegister<Item> ITEMS =

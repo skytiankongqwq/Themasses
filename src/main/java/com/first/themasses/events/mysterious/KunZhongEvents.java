@@ -27,6 +27,7 @@ import java.util.UUID;
  * 坤钟事件处理类
  * 负责：杀敌计数、伤害加成、成就监听、掉落强化、技能恢复限制
  */
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID)
 public class KunZhongEvents {
 

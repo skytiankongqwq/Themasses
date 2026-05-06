@@ -8,7 +8,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses") // 确保这里的 modid 和你项目的一致
 public class YanWenZiEvents {
 

@@ -13,7 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
+//紫昙花投掷渲染
 public class VoidPiercerProjectileRenderer extends EntityRenderer<VoidPiercerProjectileEntity> {
     private final ItemRenderer itemRenderer;
     private final ItemStack projectileStack;

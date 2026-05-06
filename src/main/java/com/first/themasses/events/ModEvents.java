@@ -58,7 +58,7 @@ import net.minecraft.network.chat.Component; // 导入文本组件
 import java.util.List;
 import java.util.function.Predicate;
 //各种事件
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ModEvents {
 

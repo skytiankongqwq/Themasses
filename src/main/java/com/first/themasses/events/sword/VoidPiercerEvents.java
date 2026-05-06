@@ -24,7 +24,7 @@ import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.List;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class VoidPiercerEvents {
 
@@ -66,40 +66,53 @@ public class VoidPiercerEvents {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onLivingHurt(LivingHurtEvent event) {
+        // 1. 绝对判定：必须是玩家造成的伤害
         if (event.getSource().getEntity() instanceof Player player) {
+
+            // 3. 核心限制：必须手持 VoidPiercer 武器
+            ItemStack mainHand = player.getMainHandItem();
+            if (!(mainHand.getItem() instanceof VoidPiercer)) return;
+
             Level world = player.level();
             BlockPos pos = player.blockPosition();
 
-            // --- 1. 基础环境判定 (所有人都有) ---
+            // --- 1. 基础环境判定 ---
             float envMultiplier = 0.0F;
             float envLifeSteal = 0.0F;
 
             boolean hasCelestialCycle = world.dimensionType().hasSkyLight();
             boolean canSeeSky = world.canSeeSky(pos);
             int brightness = world.getMaxLocalRawBrightness(pos);
+            // 新增判定：是否为夜晚
+            boolean isNight = world.isNight();
 
             if (hasCelestialCycle && canSeeSky) {
-                envMultiplier = 1.0F; // 地表 +100%
-                envLifeSteal = 0.10F;  // 地表 +10%
+                // 只有在【有日月循环】且【能看到天空】且【是晚上】的情况下，才获得 100% 增伤
+                if (isNight) {
+                    envMultiplier = 1.0F; // 晚上：伤害 +100%
+                    envLifeSteal = 0.10F;
+                } else {
+                    // 如果是白天，你可以根据需求设置。这里暂时设为不加成或基础加成
+                    envMultiplier = 0.0F;
+                    envLifeSteal = 0.0F;
+                }
             } else if (!hasCelestialCycle || brightness < 7) {
-                envMultiplier = 0.5F; // 异界/阴暗 +50%
-                envLifeSteal = 0.05F;  // 异界/阴暗 +5%
+                envMultiplier = 0.5F; // 异界/阴暗：伤害 +50%
+                envLifeSteal = 0.05F;
             }
 
-            // --- 2. 饰品额外加成 (检测 laowang237) ---
-            // 先定义饰品提供的额外变量
-            final float[] extraStats = {0.0F, 0.0F, 1.0F}; // {伤害增量, 吸血增量, 穿透倍率}
+            // --- 2. 饰品额外加成 ---
+            final float[] extraStats = {0.0F, 0.0F, 1.0F};
 
             CuriosApi.getCuriosHelper().findFirstCurio(player, stack ->
                     stack.getItem().toString().contains("laowang237")
             ).ifPresent(slot -> {
-                extraStats[0] = 0.02F; // 额外 2% 伤害
-                extraStats[1] = 0.07F; // 额外 7% 吸血
-                extraStats[2] = 1.03F; // 3% 护甲穿透
+                extraStats[0] = 0.02F;
+                extraStats[1] = 0.07F;
+                extraStats[2] = 1.03F;
             });
 
             // --- 3. 综合计算 ---
-            // 总倍率 = 1.0(原伤) + 环境加成 + 饰品加成
             float totalMultiplier = 1.0F + envMultiplier + extraStats[0];
             float totalLifeSteal = envLifeSteal + extraStats[1];
             float armorPen = extraStats[2];

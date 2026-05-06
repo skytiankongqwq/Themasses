@@ -126,7 +126,10 @@ public class MikuLaMeowEvents {
     }
 
     public static void triggerAreaBlessing(Player player, Level world, ItemStack stack) {
-        double radius = 12.0D;
+        // 读取金块强化等级 (0-3)，每级增加 2 格半径
+        int upgradeLevel = stack.getOrCreateTag().getInt("RangeUpgrade");
+        double radius = 12.0D + (upgradeLevel * 2.0D);
+
         AABB area = player.getBoundingBox().inflate(radius);
         List<LivingEntity> targets = world.getEntitiesOfClass(LivingEntity.class, area,
                 e -> e != player && isFriendly(e, player));
@@ -190,21 +193,34 @@ public class MikuLaMeowEvents {
             long currentTime = entity.level().getGameTime();
             CompoundTag data = entity.getPersistentData();
 
-            // 检查并应用延迟的单体祝福
             if (data.contains("MikuBuffActivateTime_Single")) {
                 long activateTime = data.getLong("MikuBuffActivateTime_Single");
                 if (currentTime >= activateTime) {
                     data.remove("MikuBuffActivateTime_Single");
+
+                    // 关键逻辑：激活高级特效前，先强制关闭普通 Miku 渲染（防止重叠）
+                    MikuManager.deactivate(entity);
+
                     applyDelayedSingleBlessing(entity, data);
                 }
             }
 
-            // 检查并应用延迟的范围祝福
+            // 2. 检查并应用延迟的范围祝福 (普通右键)
             if (data.contains("MikuBuffActivateTime_Area")) {
                 long activateTime = data.getLong("MikuBuffActivateTime_Area");
                 if (currentTime >= activateTime) {
                     data.remove("MikuBuffActivateTime_Area");
-                    applyDelayedAreaBlessing(entity, data);
+
+                    // 核心修改：检查当前是否已经存在生效中的单体高级祝福
+                    boolean isSingleActive = data.contains("MikuBuffEnd_Single") && currentTime <= data.getLong("MikuBuffEnd_Single");
+
+                    if (isSingleActive) {
+                        // 如果单体高级祝福正在运行，我们只应用属性，不触发普通 MikuManager 渲染
+                        applyDelayedSingleBlessing(entity, data);
+                    } else {
+                        // 如果没有高级祝福，则正常触发范围祝福（含渲染）
+                        applyDelayedAreaBlessing(entity, data);
+                    }
                 }
             }
 

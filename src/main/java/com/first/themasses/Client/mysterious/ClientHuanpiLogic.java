@@ -17,6 +17,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 //换皮逻辑
+@SuppressWarnings("removal")
 public class ClientHuanpiLogic {
 
     private static ResourceLocation originalSkin = null;

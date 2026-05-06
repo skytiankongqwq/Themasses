@@ -20,7 +20,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID, value = Dist.CLIENT)
 public class ClientKeyEvents {
 

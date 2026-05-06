@@ -35,7 +35,7 @@ import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 
 import java.util.List;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class XIN_TIRIS extends Item {
 
@@ -134,49 +134,6 @@ public class XIN_TIRIS extends Item {
         player.getCooldowns().addCooldown(curioItem, 7200);
     }
 
-    /**
-     * 核心逻辑：同时处理【玩家受击限伤】与【玩家攻击增伤】
-     */
-    @SubscribeEvent
-    public static void onLivingHurt(LivingHurtEvent event) {
-        LivingEntity victim = event.getEntity();
-
-        // --- 逻辑 1：被动防御 (玩家受击限伤 6%) ---
-        if (victim instanceof Player player) {
-            CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XIN_TIRIS).ifPresent(slot -> {
-                float maxAllowed = player.getMaxHealth() * 0.06F;
-                if (event.getAmount() > maxAllowed) {
-                    event.setAmount(maxAllowed);
-                }
-            });
-        }
-
-        // --- 逻辑 2：主动攻击 (基于 NBT 的伤害加倍) ---
-        if (event.getSource().getEntity() instanceof Player attacker && event.getSource().is(DamageTypes.PLAYER_ATTACK)) {
-            // 防止标记位冲突
-            if (victim.getPersistentData().getBoolean("XINTirisProcessed")) {
-                victim.getPersistentData().remove("XINTirisProcessed");
-                return;
-            }
-
-            CuriosApi.getCuriosHelper().findFirstCurio(attacker, stack -> stack.getItem() instanceof XIN_TIRIS).ifPresent(slot -> {
-                CompoundTag tag = slot.stack().getTagElement("RecordedNegativeEffects");
-                if (tag != null && !tag.isEmpty()) {
-                    int types = tag.getAllKeys().size();
-                    int totalLevel = 0;
-                    for (String key : tag.getAllKeys()) {
-                        totalLevel += (tag.getInt(key) + 1);
-                    }
-
-                    if (types > 0 && totalLevel > 0) {
-                        victim.getPersistentData().putBoolean("XINTirisProcessed", true);
-                        event.setAmount(event.getAmount() * types * totalLevel);
-                    }
-                }
-            });
-        }
-    }
-
     @Override
     public @NotNull Component getName(@NotNull ItemStack stack) {
         return super.getName(stack).copy().withStyle(s -> s.withColor(0x00AAAA));
@@ -194,7 +151,7 @@ public class XIN_TIRIS extends Item {
             }
             tooltip.add(Component.literal("§8已记录负面效果种类: §c" + types));
             tooltip.add(Component.literal("§8已记录负面效果总层数: §c" + totalLevel));
-            tooltip.add(Component.literal("§b[大理石修正] 单次受损上限: 6%"));
+            tooltip.add(Component.literal("§8当前倍率: §c" + totalLevel*types));
         } else {
             tooltip.add(Component.literal("§8[尚无负面效果记录]"));
         }

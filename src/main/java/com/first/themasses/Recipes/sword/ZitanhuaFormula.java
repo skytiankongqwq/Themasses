@@ -13,7 +13,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.*;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber
 public class ZitanhuaFormula {
 

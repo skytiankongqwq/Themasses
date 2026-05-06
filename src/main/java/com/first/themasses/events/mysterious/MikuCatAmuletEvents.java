@@ -19,6 +19,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
 @Mod.EventBusSubscriber(modid = "themasses")
+@SuppressWarnings("removal")
+
 public class MikuCatAmuletEvents {
 
     private static boolean hasCatAmulet(LivingEntity entity) {

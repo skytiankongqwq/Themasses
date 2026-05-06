@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
 import top.theillusivec4.curios.api.CuriosApi;
-
+@SuppressWarnings("removal")
 public class MirrorTestCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
 

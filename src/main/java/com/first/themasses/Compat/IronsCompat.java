@@ -14,7 +14,7 @@ import top.theillusivec4.curios.api.SlotContext;
 import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.function.Supplier;
-
+@SuppressWarnings("removal")
 /**
  * 魔法兼容逻辑封装类 - 反射去符号版
  * 即使没有安装 Iron's Spellbooks，此类也不会导致崩溃

@@ -22,7 +22,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 
 import java.lang.reflect.Method;
 import java.util.UUID;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class wu1wu2ContractHandler {
 

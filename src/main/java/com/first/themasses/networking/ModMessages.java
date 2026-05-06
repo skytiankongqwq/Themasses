@@ -7,6 +7,7 @@ import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
+@SuppressWarnings("removal")
 //数据包注册
 public class ModMessages {
     private static final String PROTOCOL_VERSION = "1";

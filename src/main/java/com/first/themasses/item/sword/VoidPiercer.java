@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static com.first.themasses.curios.mysterious.Auviotre.getShield;
-
+@SuppressWarnings("removal")
 public class VoidPiercer extends SwordItem {
     private final Multimap<Attribute, AttributeModifier> defaultModifiers;
 

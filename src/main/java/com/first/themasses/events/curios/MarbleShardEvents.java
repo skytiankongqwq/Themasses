@@ -21,7 +21,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 import java.util.UUID;
 
 import static com.first.themasses.item.ModItems.LAOWANG237_FOOD;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class MarbleShardEvents {
 

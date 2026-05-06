@@ -22,7 +22,7 @@ import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.List;
-
+@SuppressWarnings("removal")
 // auv饰品事件
 @Mod.EventBusSubscriber(modid = "themasses")
 public class AuviotreEvents {

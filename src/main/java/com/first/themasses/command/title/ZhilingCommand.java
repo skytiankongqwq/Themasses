@@ -14,7 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.*;
-
+@SuppressWarnings("removal")
 //头衔和换皮的代码
 public class ZhilingCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {

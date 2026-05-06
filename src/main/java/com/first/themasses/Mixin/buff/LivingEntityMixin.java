@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import top.theillusivec4.curios.api.CuriosApi;
-
+@SuppressWarnings("removal")
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
 

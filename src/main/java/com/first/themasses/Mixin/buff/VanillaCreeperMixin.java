@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
+@SuppressWarnings("removal")
 @Mixin(CreeperRenderer.class)
 public abstract class VanillaCreeperMixin {
     private static final ResourceLocation VANILLA_PIG_CREEPER = new ResourceLocation("themasses", "textures/entity/pigcreeper.png");

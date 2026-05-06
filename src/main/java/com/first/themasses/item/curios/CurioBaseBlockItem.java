@@ -11,6 +11,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
+@SuppressWarnings("removal")
 //饰品方块类
 public class CurioBaseBlockItem extends BlockItem implements ICurioItem {
     public CurioBaseBlockItem(Block block, Properties properties) {

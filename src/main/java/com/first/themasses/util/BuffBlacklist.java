@@ -6,7 +6,7 @@
     import net.minecraftforge.registries.ForgeRegistries;
     import java.util.HashSet;
     import java.util.Set;
-
+    @SuppressWarnings("removal")
     public class BuffBlacklist {
         private static final Set<MobEffect> BLACKLIST = new HashSet<>();
 

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
+@SuppressWarnings("removal")
 /**
  * @Pseudo 是 Mixin 官方提供的注解，专门用于标记那些“可能不存在”的目标类。
  */

@@ -24,7 +24,7 @@ import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 
 import java.util.List;
-
+@SuppressWarnings("removal")
 public class Baizeli extends Item {
 
     private static final ResourceLocation SKILL_SOUND = new ResourceLocation("themasses", "haqi");

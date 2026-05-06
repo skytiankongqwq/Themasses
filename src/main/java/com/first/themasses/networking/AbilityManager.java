@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 /**
  * 统一管理服务端能力触发逻辑
  */
+@SuppressWarnings("removal")
 public class AbilityManager {
     // 存储 ID 与 执行逻辑的映射
     private static final Map<Integer, Consumer<ServerPlayer>> REGISTRY = new HashMap<>();

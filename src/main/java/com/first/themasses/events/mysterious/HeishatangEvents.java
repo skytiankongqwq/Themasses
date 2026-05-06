@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 //黑砂糖饰品贿赂逻辑
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID)
 public class HeishatangEvents {
 

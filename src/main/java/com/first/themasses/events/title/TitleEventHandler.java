@@ -12,7 +12,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID)
 public class TitleEventHandler {
 
@@ -74,6 +74,7 @@ public class TitleEventHandler {
 
         if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.LAOWANG237.get()).isPresent()) {titleText = "[baka]";colorStr = "#55FFFF";}
         if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.WU1WU2.get()).isPresent()) {titleText = "[wu1wu2]";colorStr = "#9400D3";}
+        if (CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.XIN_TIRIS.get()).isPresent()) {titleText = "[XIN_TIRIS]";colorStr = "#0000FF";}
 
         if (titleText.isEmpty()) return null;
 

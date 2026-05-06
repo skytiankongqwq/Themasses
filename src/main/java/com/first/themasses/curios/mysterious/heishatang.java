@@ -23,6 +23,7 @@ import top.theillusivec4.curios.api.type.capability.ICurio;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
 import java.util.List;
+@SuppressWarnings("removal")
 //黑砂糖的饰品类
 public class heishatang extends Item implements ICurioItem {
 

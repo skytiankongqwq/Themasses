@@ -27,7 +27,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.List;
 import java.util.Random;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = TheMasses.MOD_ID)
 public class Laowang237Events {
 

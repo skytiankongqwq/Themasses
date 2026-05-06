@@ -22,7 +22,7 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
-
+@SuppressWarnings("removal")
 public class VoidPiercerProjectileEntity extends AbstractArrow {
 
     private int blockHitTimer = -1;

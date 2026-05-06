@@ -19,7 +19,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class DuvaceinEvents {
     private static final Random random = new Random();

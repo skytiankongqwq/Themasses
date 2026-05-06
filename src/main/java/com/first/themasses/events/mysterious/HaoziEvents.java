@@ -25,7 +25,7 @@ import top.theillusivec4.curios.api.CuriosApi;
 import java.util.UUID;
 
 import static com.first.themasses.item.ModItems.LAOWANG237_FOOD;
-
+@SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class HaoziEvents {
 
@@ -80,9 +80,7 @@ public class HaoziEvents {
         }
     }
 
-    /**
-     * 3. 生物屏蔽逻辑
-     */
+
     /**
      * 3. 改进型生物屏蔽逻辑：不主动攻击，但受击必反击
      */
