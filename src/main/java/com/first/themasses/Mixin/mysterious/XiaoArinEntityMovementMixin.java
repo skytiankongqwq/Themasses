@@ -7,19 +7,29 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import top.theillusivec4.curios.api.CuriosApi;
+
 @SuppressWarnings("removal")
 @Mixin(Entity.class)
 public abstract class XiaoArinEntityMovementMixin {
 
-    // 逻辑 1：彻底无视减速（保证 Shift 能动）
-    @Inject(method = "makeStuckInBlock", at = @At("HEAD"), cancellable = true)
+    /**
+     * 修复点 1：补全方法签名
+     * 在 1.20.1 中，如果只写方法名有时会导致定位失败。增加完整描述符可提高兼容性。
+     */
+    @Inject(
+            method = "makeStuckInBlock(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/phys/Vec3;)V",
+            at = @At("HEAD"),
+            cancellable = true,
+            remap = true // 确保在生产环境（混淆后）也能找到该方法
+    )
     private void onMakeStuckInBlock(BlockState state, Vec3 multiplier, CallbackInfo ci) {
-        if ((Object) this instanceof Player player && isWearingXiaoArin(player)) {
+        if ((Object) this instanceof Player player && themasses$isWearingXiaoArin(player)) {
             if (state.is(Blocks.POWDER_SNOW) || state.is(Blocks.SWEET_BERRY_BUSH)) {
                 ci.cancel();
             }
@@ -27,14 +37,16 @@ public abstract class XiaoArinEntityMovementMixin {
     }
 
     /**
-     * 逻辑 2：解决“Shift无法移动”和“视角抖动”
-     * 注入 isSteppingCarefully。
-     * 当这个方法返回 true 时，物理引擎会认为玩家在“小心行走”（类似穿了皮革靴子）。
-     * 这样引擎会自动处理碰撞，不会把你卡住，也不会产生 setPos 带来的视角抖动。
+     * 修复点 2：isSteppingCarefully 同样建议开启 remap
      */
-    @Inject(method = "isSteppingCarefully", at = @At("HEAD"), cancellable = true)
+    @Inject(
+            method = "isSteppingCarefully()Z",
+            at = @At("HEAD"),
+            cancellable = true,
+            remap = true
+    )
     private void onIsSteppingCarefully(CallbackInfoReturnable<Boolean> cir) {
-        if ((Object) this instanceof Player player && isWearingXiaoArin(player)) {
+        if ((Object) this instanceof Player player && themasses$isWearingXiaoArin(player)) {
             // 如果脚下或身处细雪，返回 true
             if (player.level().getBlockState(player.blockPosition()).is(Blocks.POWDER_SNOW) ||
                     player.level().getBlockState(player.blockPosition().below()).is(Blocks.POWDER_SNOW)) {
@@ -43,18 +55,11 @@ public abstract class XiaoArinEntityMovementMixin {
         }
     }
 
-    /**
-     * 逻辑 3：解决“从高空落下”和“冰冻”
-     * 我们只在这里处理冰冻和坠落速度，不再强制 setPos
-     */
-    @Inject(method = "tick", at = @At("HEAD"))
+    @Inject(method = "tick()V", at = @At("HEAD"), remap = true)
     private void onEntityTick(CallbackInfo ci) {
-        if ((Object) this instanceof Player player && isWearingXiaoArin(player)) {
-            // 清除冰冻效果
+        if ((Object) this instanceof Player player && themasses$isWearingXiaoArin(player)) {
             if (player.getTicksFrozen() > 0) player.setTicksFrozen(0);
 
-            // 物理辅助：如果正在掉进细雪，稍微给一个向上的浮力（模拟固体碰撞）
-            // 这能防止在高速运动下身体陷入方块导致的视角切换
             if (player.level().getBlockState(player.blockPosition()).is(Blocks.POWDER_SNOW)) {
                 Vec3 motion = player.getDeltaMovement();
                 if (motion.y < 0) {
@@ -66,7 +71,11 @@ public abstract class XiaoArinEntityMovementMixin {
         }
     }
 
-    private boolean isWearingXiaoArin(Player player) {
+    /**
+     * 建议：使用 @Unique 并增加前缀，防止与原类或其他模组的方法冲突
+     */
+    @Unique
+    private boolean themasses$isWearingXiaoArin(Player player) {
         return CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XiaoArin).isPresent();
     }
 }
