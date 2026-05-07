@@ -61,7 +61,7 @@ public class XIN_TIRIS extends Item {
                 LivingEntity entity = slotContext.entity();
                 if (entity.level().isClientSide || !(entity instanceof Player player)) return;
 
-                CompoundTag tag = stack.getOrCreateTagElement("RecordedNegativeEffects");
+                CompoundTag tag = stack.getOrCreateTagElement("RecordedEffects");
                 for (MobEffectInstance effect : player.getActiveEffects()) {
                     ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
                     if (effectId != null) {
@@ -154,18 +154,36 @@ public class XIN_TIRIS extends Item {
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.themasses.xin_tiris.line1").withStyle(ChatFormatting.AQUA));
-        CompoundTag tag = stack.getTagElement("RecordedNegativeEffects");
-        if (tag != null) {
-            int types = tag.getAllKeys().size();
-            int totalLevel = 0;
-            for (String key : tag.getAllKeys()) {
-                totalLevel += (tag.getInt(key) + 1);
-            }
-            tooltip.add(Component.literal("§8已记录效果种类: §c" + types));
-            tooltip.add(Component.literal("§8当前增加的伤害值（livinghurt层）: §c" + totalLevel*types));
-        } else {
+        if (level != null && !level.isClientSide()) {
+            for (net.minecraft.world.entity.player.Player player : level.players()) {
+                if (player instanceof ServerPlayer serverPlayer) {
+                    var curioOpt = CuriosApi.getCuriosHelper().findFirstCurio(serverPlayer, s -> s.getItem() instanceof XIN_TIRIS);
+                    if (curioOpt.isPresent() && curioOpt.get().stack() == stack) {
+                        java.util.Set<String> immediateEffectIds = new java.util.HashSet<>();
+                        int immediateTotalLevel = 0;
+
+                        for (MobEffectInstance effect : serverPlayer.getActiveEffects()) {
+                            ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
+                            if (effectId != null) {
+                                String idStr = effectId.toString();
+                                if (!immediateEffectIds.contains(idStr)) {
+                                    immediateEffectIds.add(idStr);
+                                    immediateTotalLevel += (effect.getAmplifier() + 1);
+                                }
+                            }
+                        }
+                        CompoundTag tag = stack.getTagElement("RecordedEffects");
+                        if (tag != null) {
+                            int types = tag.getAllKeys().size();
+                            tooltip.add(Component.literal("§8已记录效果种类: §c" + types));
+                            tooltip.add(Component.literal("§8当前增加的伤害值（livinghurt层）: §c" + immediateTotalLevel*types));
+                    } else {
             tooltip.add(Component.literal("§8[尚无效果记录]"));
         }
         super.appendHoverText(stack, level, tooltip, flag);
+                    }
+                }
+            }
+        }
     }
 }
