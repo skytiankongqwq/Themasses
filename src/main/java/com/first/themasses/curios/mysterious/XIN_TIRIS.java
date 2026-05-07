@@ -63,14 +63,12 @@ public class XIN_TIRIS extends Item {
 
                 CompoundTag tag = stack.getOrCreateTagElement("RecordedNegativeEffects");
                 for (MobEffectInstance effect : player.getActiveEffects()) {
-                    if (!effect.getEffect().isBeneficial()) {
-                        ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
-                        if (effectId != null) {
-                            String key = effectId.toString();
-                            int currentAmp = effect.getAmplifier();
-                            if (!tag.contains(key) || tag.getInt(key) < currentAmp) {
-                                tag.putInt(key, currentAmp);
-                            }
+                    ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
+                    if (effectId != null) {
+                        String key = effectId.toString();
+                        int currentAmp = effect.getAmplifier();
+                        if (!tag.contains(key) || tag.getInt(key) < currentAmp) {
+                            tag.putInt(key, currentAmp);
                         }
                     }
                 }
@@ -101,7 +99,7 @@ public class XIN_TIRIS extends Item {
                             atkInst.addPermanentModifier(new AttributeModifier(
                                     uuid,
                                     "xin_tiris_attack_bonus",
-                                    types,
+                                    (double) types,
                                     AttributeModifier.Operation.ADDITION
                             ));
                         }
@@ -163,11 +161,10 @@ public class XIN_TIRIS extends Item {
             for (String key : tag.getAllKeys()) {
                 totalLevel += (tag.getInt(key) + 1);
             }
-            tooltip.add(Component.literal("§8已记录负面效果种类: §c" + types));
-            tooltip.add(Component.literal("§8已记录负面效果总层数: §c" + totalLevel));
-            tooltip.add(Component.literal("§8当前倍率: §c" + totalLevel*types));
+            tooltip.add(Component.literal("§8已记录效果种类: §c" + types));
+            tooltip.add(Component.literal("§8当前增加的伤害值（livinghurt层）: §c" + totalLevel*types));
         } else {
-            tooltip.add(Component.literal("§8[尚无负面效果记录]"));
+            tooltip.add(Component.literal("§8[尚无效果记录]"));
         }
         super.appendHoverText(stack, level, tooltip, flag);
     }

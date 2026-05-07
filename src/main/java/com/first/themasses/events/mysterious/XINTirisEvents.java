@@ -45,16 +45,42 @@ public class XINTirisEvents {
                 CompoundTag tag = slot.stack().getTagElement("RecordedNegativeEffects");
 
                 if (tag != null && !tag.isEmpty()) {
-                    int types = tag.getAllKeys().size();
-                    int totalLevel = 0;
+                    // 历史buff种类数（去重后的低等级）
+                    int historicalTypes = tag.getAllKeys().size();
+                    int historicalTotalLevel = 0;
                     for (String key : tag.getAllKeys()) {
-                        totalLevel += (tag.getInt(key) + 1);
+                        historicalTotalLevel += (tag.getInt(key) + 1);
                     }
 
-                    if (types > 0 && totalLevel > 0) {
-                        float multiplier = (float) types * totalLevel;
+                    // 即时buff统计（当前所有效果）
+                    java.util.Set<String> immediateEffectIds = new java.util.HashSet<>();
+                    int immediateTotalLevel = 0;
+                    for (var effect : attacker.getActiveEffects()) {
+                        var effectId = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
+                        if (effectId != null) {
+                            String idStr = effectId.toString();
+                            if (!immediateEffectIds.contains(idStr)) {
+                                immediateEffectIds.add(idStr);
+                                immediateTotalLevel += (effect.getAmplifier() + 1);
+                            }
+                        }
+                    }
+
+                    // 总种类数 = 历史 + 即时（排除重复）
+                    int totalTypes = historicalTypes;
+                    for (String id : immediateEffectIds) {
+                        if (!tag.contains(id)) {
+                            totalTypes++;
+                        }
+                    }
+
+                    // 总等级数 = 历史最高等级 + 即时等级
+                    int grandTotalLevel = historicalTotalLevel + immediateTotalLevel;
+
+                    if (totalTypes > 0 && grandTotalLevel > 0) {
+                        float bonusDamage = (float) totalTypes * (grandTotalLevel + 1);
                         victim.getPersistentData().putBoolean("XINTirisProcessed", true);
-                        event.setAmount(event.getAmount() + multiplier);
+                        event.setAmount(event.getAmount() + bonusDamage);
                     }
                 }
             });
