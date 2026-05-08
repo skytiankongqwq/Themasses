@@ -94,7 +94,7 @@ public class wu1wu2EvolutionHandler {
             int n = wu1wu2DataManager.getPermanentN(attacker);
             if (n > 0) {
                 float multiplier = (float) getLog2Multiplier(n);
-                event.setAmount(event.getAmount() * (1.0F + multiplier/2));
+                event.setAmount(event.getAmount() * (1.0F + multiplier/10));
                 victim.getPersistentData().putInt("SentientVulnerability", n);
             }
         }
@@ -110,29 +110,29 @@ public class wu1wu2EvolutionHandler {
         if (victim.getPersistentData().contains("SentientVulnerability")) {
             int n = victim.getPersistentData().getInt("SentientVulnerability");
             double vulnerability = getLog2Multiplier(n);
-            event.setAmount((float) (event.getAmount() * (1.0 + vulnerability/2)));
+            event.setAmount((float) (event.getAmount() * (1.0 + vulnerability/10)));
         }
     }
 
-    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
-    public static void onBeingDamage(LivingDamageEvent event){
-        LivingEntity victim = event.getEntity();
-
-        if (victim instanceof Player player && hasUnity(player)) {
-            int n = wu1wu2DataManager.getPermanentN(player);
-            if (n > 0) {
-                float damageReduction = (float) getLog2Multiplier(n);
-                float maxHealth = victim.getMaxHealth();
-                float damagePercent = 100.0f / (damageReduction + 0.05f);
-                float maxDamage = maxHealth * (damagePercent / 100.0f);
-                maxDamage = Math.max(maxDamage, maxHealth * 0.01f);
-
-                if (event.getAmount() > maxDamage) {
-                    event.setAmount(maxDamage);
-                }
-            }
-        }
-    }
+//    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+//    public static void onBeingDamage(LivingDamageEvent event){
+//        LivingEntity victim = event.getEntity();
+//
+//        if (victim instanceof Player player && hasUnity(player)) {
+//            int n = wu1wu2DataManager.getPermanentN(player);
+//            if (n > 0) {
+//                float damageReduction = (float) getLog2Multiplier(n);
+//                float maxHealth = victim.getMaxHealth();
+//                float damagePercent = 100.0f / (damageReduction + 0.05f);
+//                float maxDamage = maxHealth * (damagePercent / 100.0f);
+//                maxDamage = Math.max(maxDamage, maxHealth * 0.01f);
+//
+//                if (event.getAmount() > maxDamage) {
+//                    event.setAmount(maxDamage);
+//                }
+//            }
+//        }
+//    }
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -219,40 +219,34 @@ public class wu1wu2EvolutionHandler {
     }
 
     public static void boostServant(LivingEntity servant, double m, int n) {
-        // 这里不再直接 return，由外部 isValidServant 过滤
         AttributeInstance hpInst = servant.getAttribute(Attributes.MAX_HEALTH);
         if (hpInst != null) {
             float oldMax = servant.getMaxHealth();
             double baseHp = hpInst.getBaseValue();
-
-            // 公式：基础血量 * (1 + 倍率) + 固定加成
-            double hpBonus = (baseHp * m) + (double)n;
-
+            double hpBonus = (baseHp * m) + (double)n / 5;
             updateModifier(servant, Attributes.MAX_HEALTH, SERVANT_HP_MOD_UUID, "ServantHP", hpBonus);
 
             float newMax = servant.getMaxHealth();
             if (newMax > oldMax) {
-                // 如果是新加成，直接补满；如果是老加成微调，补差价
                 servant.heal(newMax - oldMax);
             }
         }
 
         AttributeInstance dmgInst = servant.getAttribute(Attributes.ATTACK_DAMAGE);
         if (dmgInst != null) {
-            // 攻击力也按比例 + 固定值
-            double dmgBonus = (dmgInst.getBaseValue() * m) + (n * 0.5);
+            double dmgBonus = (dmgInst.getBaseValue() * m) + (n * 0.1);
             updateModifier(servant, Attributes.ATTACK_DAMAGE, SERVANT_DMG_MOD_UUID, "ServantDMG", dmgBonus);
         }
 
         AttributeInstance armorInst = servant.getAttribute(Attributes.ARMOR);
         if (armorInst != null) {
-            double armorBonus = (armorInst.getBaseValue() * m) + (n * 0.5);
+            double armorBonus = (armorInst.getBaseValue() * m) + (n * 0.1);
             updateModifier(servant, Attributes.ARMOR, SERVANT_ARMOR_MOD_UUID, "ServantARMOR", armorBonus);
         }
 
         AttributeInstance toughnessInst = servant.getAttribute(Attributes.ARMOR_TOUGHNESS);
         if (toughnessInst != null) {
-            double toughnessBonus = (toughnessInst.getBaseValue() * m) + (n * 0.5);
+            double toughnessBonus = (toughnessInst.getBaseValue() * m) + (n * 0.1);
             updateModifier(servant, Attributes.ARMOR_TOUGHNESS, SERVANT_TOUGHNESS_MOD_UUID, "ServantTOUGHNESS", toughnessBonus);
         }
     }

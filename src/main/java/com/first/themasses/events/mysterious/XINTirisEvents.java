@@ -14,6 +14,33 @@ import top.theillusivec4.curios.api.CuriosApi;
 @Mod.EventBusSubscriber(modid = "themasses")
 public class XINTirisEvents {
 
+    public static int calculateImmediateTotalLevel(Player player) {
+        java.util.Set<String> immediateEffectIds = new java.util.HashSet<>();
+        int immediateTotalLevel = 0;
+        for (var effect : player.getActiveEffects()) {
+            var effectId = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
+            if (effectId != null) {
+                String idStr = effectId.toString();
+                if (!immediateEffectIds.contains(idStr)) {
+                    immediateEffectIds.add(idStr);
+                    immediateTotalLevel += (effect.getAmplifier() + 1);
+                }
+            }
+        }
+        return immediateTotalLevel;
+    }
+
+    public static java.util.Set<String> getImmediateEffectIds(Player player) {
+        java.util.Set<String> immediateEffectIds = new java.util.HashSet<>();
+        for (var effect : player.getActiveEffects()) {
+            var effectId = net.minecraftforge.registries.ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
+            if (effectId != null) {
+                immediateEffectIds.add(effectId.toString());
+            }
+        }
+        return immediateEffectIds;
+    }
+
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         LivingEntity victim = event.getEntity();
@@ -22,7 +49,7 @@ public class XINTirisEvents {
         if (victim instanceof Player player) {
             CuriosApi.getCuriosHelper().findFirstCurio(player, stack -> stack.getItem() instanceof XIN_TIRIS).ifPresent(slot -> {
                 int types = 0;
-                var tag = slot.stack().getTagElement("RecordedNegativeEffects");
+                var tag = slot.stack().getTagElement("RecordedEffects");
                 if (tag != null) {
                     types = tag.getAllKeys().size();
                 }
@@ -42,19 +69,28 @@ public class XINTirisEvents {
             }
 
             CuriosApi.getCuriosHelper().findFirstCurio(attacker, stack -> stack.getItem() instanceof XIN_TIRIS).ifPresent(slot -> {
-                CompoundTag tag = slot.stack().getTagElement("RecordedNegativeEffects");
+                CompoundTag tag = slot.stack().getTagElement("RecordedEffects");
 
                 if (tag != null && !tag.isEmpty()) {
-                    int types = tag.getAllKeys().size();
-                    int totalLevel = 0;
-                    for (String key : tag.getAllKeys()) {
-                        totalLevel += (tag.getInt(key) + 1);
+                    // 历史buff种类数（去重后的低等级）
+                    int historicalTypes = tag.getAllKeys().size();
+
+                    // 即时buff统计（当前所有效果）
+                    int immediateTotalLevel = calculateImmediateTotalLevel(attacker);
+                    java.util.Set<String> immediateEffectIds = getImmediateEffectIds(attacker);
+
+                    // 总种类数 = 历史 + 即时（排除重复）
+                    int totalTypes = historicalTypes;
+                    for (String id : immediateEffectIds) {
+                        if (!tag.contains(id)) {
+                            totalTypes++;
+                        }
                     }
 
-                    if (types > 0 && totalLevel > 0) {
-                        float multiplier = (float) types * totalLevel;
+                    if (totalTypes > 0 ) {
+                        float bonusDamage = (float) totalTypes * (immediateTotalLevel + 1);
                         victim.getPersistentData().putBoolean("XINTirisProcessed", true);
-                        event.setAmount(event.getAmount() + multiplier);
+                        event.setAmount(event.getAmount() + bonusDamage);
                     }
                 }
             });

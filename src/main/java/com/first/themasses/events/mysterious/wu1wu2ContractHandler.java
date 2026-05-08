@@ -271,28 +271,28 @@ public class wu1wu2ContractHandler {
         } catch (Exception ignored) {}
     }
 
-    @SubscribeEvent
-    public static void onDeathPrevention(LivingDeathEvent event) {
-        if (!wu1wu2EvolutionHandler.isServantConversionEnabled) return;
-        // 直接判断实体是否为玩家，以及是否拥有 Unity 效果/物品
-        if (event.getEntity() instanceof ServerPlayer player && hasUnity(player)) {
-            if (player.level() instanceof ServerLevel serverLevel) {
-                SearchServant.getEnhancedServantData(player).ifPresent(data -> {
-                    for (UUID uuid : data.servantDetails.keySet()) {
-                        Entity entity = serverLevel.getEntity(uuid);
-                        if (entity instanceof LivingEntity servant && servant.isAlive()) {
-                            event.setCanceled(true);
-                            player.setHealth(4.0F);
-                            player.teleportTo(serverLevel, servant.getX(), servant.getY(), servant.getZ(), player.getYRot(), player.getXRot());
-                            servant.hurt(player.damageSources().genericKill(), Float.MAX_VALUE);
-                            player.displayClientMessage(Component.literal("§c眷属献祭了自己..."), true);
-                            break;
-                        }
-                    }
-                });
-            }
-        }
-    }
+//    @SubscribeEvent
+//    public static void onDeathPrevention(LivingDeathEvent event) {
+//        if (!wu1wu2EvolutionHandler.isServantConversionEnabled) return;
+//        // 直接判断实体是否为玩家，以及是否拥有 Unity 效果/物品
+//        if (event.getEntity() instanceof ServerPlayer player && hasUnity(player)) {
+//            if (player.level() instanceof ServerLevel serverLevel) {
+//                SearchServant.getEnhancedServantData(player).ifPresent(data -> {
+//                    for (UUID uuid : data.servantDetails.keySet()) {
+//                        Entity entity = serverLevel.getEntity(uuid);
+//                        if (entity instanceof LivingEntity servant && servant.isAlive()) {
+//                            event.setCanceled(true);
+//                            player.setHealth(4.0F);
+//                            player.teleportTo(serverLevel, servant.getX(), servant.getY(), servant.getZ(), player.getYRot(), player.getXRot());
+//                            servant.hurt(player.damageSources().genericKill(), Float.MAX_VALUE);
+//                            player.displayClientMessage(Component.literal("§c眷属献祭了自己..."), true);
+//                            break;
+//                        }
+//                    }
+//                });
+//            }
+//        }
+//    }
 
     private static boolean hasUnity(Player p) {
         if (p == null) return false;

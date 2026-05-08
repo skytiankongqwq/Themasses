@@ -1,5 +1,6 @@
 package com.first.themasses.curios.mysterious;
 
+import com.first.themasses.events.mysterious.XINTirisEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -61,16 +62,14 @@ public class XIN_TIRIS extends Item {
                 LivingEntity entity = slotContext.entity();
                 if (entity.level().isClientSide || !(entity instanceof Player player)) return;
 
-                CompoundTag tag = stack.getOrCreateTagElement("RecordedNegativeEffects");
+                CompoundTag tag = stack.getOrCreateTagElement("RecordedEffects");
                 for (MobEffectInstance effect : player.getActiveEffects()) {
-                    if (!effect.getEffect().isBeneficial()) {
-                        ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
-                        if (effectId != null) {
-                            String key = effectId.toString();
-                            int currentAmp = effect.getAmplifier();
-                            if (!tag.contains(key) || tag.getInt(key) < currentAmp) {
-                                tag.putInt(key, currentAmp);
-                            }
+                    ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
+                    if (effectId != null) {
+                        String key = effectId.toString();
+                        int currentAmp = effect.getAmplifier();
+                        if (!tag.contains(key) || tag.getInt(key) < currentAmp) {
+                            tag.putInt(key, currentAmp);
                         }
                     }
                 }
@@ -101,7 +100,7 @@ public class XIN_TIRIS extends Item {
                             atkInst.addPermanentModifier(new AttributeModifier(
                                     uuid,
                                     "xin_tiris_attack_bonus",
-                                    types,
+                                    (double) types,
                                     AttributeModifier.Operation.ADDITION
                             ));
                         }
@@ -156,18 +155,27 @@ public class XIN_TIRIS extends Item {
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.themasses.xin_tiris.line1").withStyle(ChatFormatting.AQUA));
-        CompoundTag tag = stack.getTagElement("RecordedNegativeEffects");
+        CompoundTag tag = stack.getTagElement("RecordedEffects");
         if (tag != null) {
             int types = tag.getAllKeys().size();
-            int totalLevel = 0;
-            for (String key : tag.getAllKeys()) {
-                totalLevel += (tag.getInt(key) + 1);
+
+            int immediateTotalLevel = 0;
+            if (level != null && !level.isClientSide()) {
+                for (net.minecraft.world.entity.player.Player player : level.players()) {
+                    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                        var curioOpt = CuriosApi.getCuriosHelper().findFirstCurio(serverPlayer, s -> s.getItem() instanceof XIN_TIRIS);
+                        if (curioOpt.isPresent() && curioOpt.get().stack() == stack) {
+                            immediateTotalLevel = XINTirisEvents.calculateImmediateTotalLevel(serverPlayer);
+                            break;
+                        }
+                    }
+                }
             }
-            tooltip.add(Component.literal("§8已记录负面效果种类: §c" + types));
-            tooltip.add(Component.literal("§8已记录负面效果总层数: §c" + totalLevel));
-            tooltip.add(Component.literal("§8当前倍率: §c" + totalLevel*types));
+
+            tooltip.add(Component.literal("§8已记录效果种类: §c" + types));
+            tooltip.add(Component.literal("§8当前增加的伤害值: §c" + (immediateTotalLevel + 1) * types));
         } else {
-            tooltip.add(Component.literal("§8[尚无负面效果记录]"));
+            tooltip.add(Component.literal("§8[尚无效果记录]"));
         }
         super.appendHoverText(stack, level, tooltip, flag);
     }
