@@ -173,7 +173,7 @@ public class XIN_TIRIS extends Item {
             }
 
             tooltip.add(Component.literal("§8已记录效果种类: §c" + types));
-            tooltip.add(Component.literal("§8当前增加的伤害值（livinghurt层）: §c" + (immediateTotalLevel + 1) * types));
+            tooltip.add(Component.literal("§8当前增加的伤害值: §c" + (immediateTotalLevel + 1) * types));
         } else {
             tooltip.add(Component.literal("§8[尚无效果记录]"));
         }
