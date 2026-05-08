@@ -1,5 +1,6 @@
 package com.first.themasses.curios.mysterious;
 
+import com.first.themasses.events.mysterious.XINTirisEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -154,36 +155,28 @@ public class XIN_TIRIS extends Item {
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level, @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
         tooltip.add(Component.translatable("tooltip.themasses.xin_tiris.line1").withStyle(ChatFormatting.AQUA));
-        if (level != null && !level.isClientSide()) {
-            for (net.minecraft.world.entity.player.Player player : level.players()) {
-                if (player instanceof ServerPlayer serverPlayer) {
-                    var curioOpt = CuriosApi.getCuriosHelper().findFirstCurio(serverPlayer, s -> s.getItem() instanceof XIN_TIRIS);
-                    if (curioOpt.isPresent() && curioOpt.get().stack() == stack) {
-                        java.util.Set<String> immediateEffectIds = new java.util.HashSet<>();
-                        int immediateTotalLevel = 0;
+        CompoundTag tag = stack.getTagElement("RecordedEffects");
+        if (tag != null) {
+            int types = tag.getAllKeys().size();
 
-                        for (MobEffectInstance effect : serverPlayer.getActiveEffects()) {
-                            ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect());
-                            if (effectId != null) {
-                                String idStr = effectId.toString();
-                                if (!immediateEffectIds.contains(idStr)) {
-                                    immediateEffectIds.add(idStr);
-                                    immediateTotalLevel += (effect.getAmplifier() + 1);
-                                }
-                            }
+            int immediateTotalLevel = 0;
+            if (level != null && !level.isClientSide()) {
+                for (net.minecraft.world.entity.player.Player player : level.players()) {
+                    if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                        var curioOpt = CuriosApi.getCuriosHelper().findFirstCurio(serverPlayer, s -> s.getItem() instanceof XIN_TIRIS);
+                        if (curioOpt.isPresent() && curioOpt.get().stack() == stack) {
+                            immediateTotalLevel = XINTirisEvents.calculateImmediateTotalLevel(serverPlayer);
+                            break;
                         }
-                        CompoundTag tag = stack.getTagElement("RecordedEffects");
-                        if (tag != null) {
-                            int types = tag.getAllKeys().size();
-                            tooltip.add(Component.literal("§8已记录效果种类: §c" + types));
-                            tooltip.add(Component.literal("§8当前增加的伤害值（livinghurt层）: §c" + immediateTotalLevel*types));
-                    } else {
-            tooltip.add(Component.literal("§8[尚无效果记录]"));
-        }
-        super.appendHoverText(stack, level, tooltip, flag);
                     }
                 }
             }
+
+            tooltip.add(Component.literal("§8已记录效果种类: §c" + types));
+            tooltip.add(Component.literal("§8当前增加的伤害值（livinghurt层）: §c" + (immediateTotalLevel + 1) * types));
+        } else {
+            tooltip.add(Component.literal("§8[尚无效果记录]"));
         }
+        super.appendHoverText(stack, level, tooltip, flag);
     }
 }
