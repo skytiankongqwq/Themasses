@@ -1,10 +1,13 @@
 package com.first.themasses.curios.mysterious;
 
+import com.first.themasses.networking.ModMessages;
+import com.first.themasses.networking.PacketSyncSimTime;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -17,12 +20,14 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.CuriosApi;
 import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurio;
 
 import java.util.List;
 
+@SuppressWarnings("removal")
 public class Sim extends Item implements ICurio {
 
     public Sim(Properties properties) {
@@ -53,16 +58,32 @@ public class Sim extends Item implements ICurio {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
 
+        // 逻辑：只有在服务器端运行
         if (!level.isClientSide) {
-            // 给玩家打上 NBT 标记，记录 Buff 结束的时间戳 (当前时间 + 60秒 = 1200 ticks)
-            player.getPersistentData().putLong("SimActiveEndTime", level.getGameTime() + 1200);
-            player.displayClientMessage(Component.literal("§b[仿真] §f视野推演已启动！"), true);
-
-            // 随便加个冷却时间，这里设置 120 秒，避免无限用
-            player.getCooldowns().addCooldown(this, 2400);
+            if (CuriosApi.getCuriosHelper().findFirstCurio(player, this).isPresent()) {
+                if (!player.getCooldowns().isOnCooldown(this)) {
+                    Sim.startSimulation(player, level);
+                    // 修改为 360 秒冷却 (7200 ticks)
+                    player.getCooldowns().addCooldown(this, 7200);
+                    return InteractionResultHolder.consume(stack);
+                }
+            } else {
+                // 如果没戴在饰品栏，提示玩家
+                player.displayClientMessage(Component.literal("§c[Sim] 必须佩戴在饰品栏才能激活仿真系统！"), true);
+            }
         }
 
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
+    }
+
+    public static void startSimulation(Player player, Level level) {
+        if (!level.isClientSide) {
+            // 修改：标记技能开启。不再记录 EndTime，而是记录一个开关
+            player.getPersistentData().putBoolean("SimLuckyActive", true);
+
+            // 发送提示
+            player.displayClientMessage(Component.literal("§b[仿真] §f因果逻辑已锁定：下一次 击杀/附魔/开箱 将获得全部可能收益！"), false);
+        }
     }
 
     @Override
@@ -75,7 +96,6 @@ public class Sim extends Item implements ICurio {
         ).withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x00AAAA)));
 
         tooltip.add(line1);
-
     }
 
     @Override

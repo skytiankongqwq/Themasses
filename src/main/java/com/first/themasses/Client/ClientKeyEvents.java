@@ -38,6 +38,7 @@ public class ClientKeyEvents {
         ABILITY_REGISTRY.put(MarbleShardItem.class, -5152);
         ABILITY_REGISTRY.put(haozi.class, -333);
         ABILITY_REGISTRY.put(wu1wu2.class, -51);
+        ABILITY_REGISTRY.put(Sim.class, -1010);
     }
 
     @SubscribeEvent

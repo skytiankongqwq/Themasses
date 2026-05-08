@@ -56,6 +56,12 @@ public class ModMessages {
                 .consumerMainThread(PacketXINTirisSkill::handle)
                 .add();
 
+        INSTANCE.messageBuilder(PacketSyncSimTime.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(PacketSyncSimTime::new) // 使用构造函数解码
+                .encoder(PacketSyncSimTime::encode)
+                .consumerMainThread(PacketSyncSimTime::handle)
+                .add();
+
         // 如果以后有新的数据包，直接在这里复制上面的模板，id() 会自动递增
     }
 

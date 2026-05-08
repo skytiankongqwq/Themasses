@@ -4,6 +4,7 @@ import com.first.themasses.curios.all.MarbleShardItem;
 import com.first.themasses.curios.mysterious.*;
 import com.first.themasses.curios.ring.heishatangring;
 import com.first.themasses.events.mysterious.DuvaceinEvents;
+import com.first.themasses.events.mysterious.SimEvents;
 import com.first.themasses.events.mysterious.wu1wu2EvolutionHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -56,6 +57,12 @@ public class AbilityManager {
         registerCurioAbility(-333, haozi.class, (player, stack) -> haozi.executeHaoziSkill(player));
         // wu1wu2 (-51)
         registerCurioAbility(-51, wu1wu2.class, (player, stack) -> wu1wu2EvolutionHandler.handleAbilityPacket(player, -51));
+        // sim (-1010)
+        registerCurioAbility(-1010, Sim.class, (player, stack) -> {if (!player.getCooldowns().isOnCooldown(stack.getItem())) {
+                Sim.startSimulation(player, player.level());
+                player.getCooldowns().addCooldown(stack.getItem(), 2400); // 120秒冷却
+            }
+        });
     }
 
     /**

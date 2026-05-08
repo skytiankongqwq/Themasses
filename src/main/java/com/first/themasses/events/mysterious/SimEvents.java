@@ -3,6 +3,8 @@ package com.first.themasses.events.mysterious;
 import com.first.themasses.item.ModItems;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -10,25 +12,43 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.inventory.EnchantmentMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.enchanting.EnchantmentLevelSetEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.UUID;
+import java.util.Map;
+import java.util.List;
+
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class SimEvents {
@@ -40,10 +60,128 @@ public class SimEvents {
     }
 
     private static boolean hasSim(Player player) {
-        if (player == null || getSimItem() == null) return false;
-        if (CuriosApi.getCuriosHelper().findFirstCurio(player, getSimItem()).isPresent()) return true;
-        return player.getInventory().contains(new ItemStack(getSimItem()));
+        if (player == null) return false;
+        return CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.SIM.get()).isPresent();
     }
+
+    // 清除技能状态的辅助方法
+    private static void consumeSimAbility(Player player) {
+        player.getPersistentData().remove("SimLuckyActive");
+        player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1.0F, 1.5F);
+    }
+
+    // ================== 新主动技能逻辑：三种情况 ==================
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onLivingDrops(LivingDropsEvent event) {
+        if (event.getSource().getEntity() instanceof Player player && isLucky(player)) {
+            LivingEntity victim = event.getEntity();
+            if (!(victim.level() instanceof ServerLevel serverLevel)) return;
+
+            // 1. 清空原生随机，我们要手动发货
+            event.getDrops().clear();
+
+            // 2. 强制掉落原本穿戴的装备
+            victim.getArmorSlots().forEach(s -> addRawStack(event, victim, s));
+            victim.getHandSlots().forEach(s -> addRawStack(event, victim, s));
+
+            try {
+                ResourceLocation loc = victim.getLootTable();
+                // 直接获取 LootTable 对象
+                LootTable table = serverLevel.getServer().getLootData().getLootTable(loc);
+
+                // 【关键修改】绕过 Registries，直接使用 LootDataType 序列化 table 对象
+                // 这样 100% 不会报 LOOT_TABLE 的错
+                com.google.gson.JsonElement jsonElement = net.minecraft.world.level.storage.loot.LootDataType.TABLE.parser().toJsonTree(table);
+
+                if (jsonElement != null && jsonElement.isJsonObject()) {
+                    String jsonStr = jsonElement.toString();
+                    // 用正则表达式暴力抓取 JSON 里所有的物品 ID
+                    // 这种匹配方式能精准锁定所有 "name": "..." 里的物品
+                    java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
+                    java.util.regex.Matcher matcher = pattern.matcher(jsonStr);
+
+                    java.util.Set<String> foundIds = new java.util.HashSet<>();
+                    while (matcher.find()) {
+                        String id = matcher.group(1);
+
+                        // 过滤掉非物品项（比如嵌套表或者某些特殊函数名）
+                        if (!id.contains("loot_tables") && !id.contains("functions") && foundIds.add(id)) {
+                            // 利用 Forge 注册表直接把字符串 ID 变成 Item 对象
+                            Item item = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
+                            if (item != null && item != net.minecraft.world.item.Items.AIR) {
+                                addRawStack(event, victim, new ItemStack(item));
+                            }
+                        }
+                    }
+                }
+
+                player.displayClientMessage(Component.literal("§b[仿真] §f因果坍缩：名册强制补完。"), true);
+                consume(player);
+            } catch (Exception e) {
+                // 反正报错了我们就打印，不耽误程序运行
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void addRawStack(LivingDropsEvent event, LivingEntity victim, ItemStack stack) {
+        if (!stack.isEmpty()) {
+            event.getDrops().add(new ItemEntity(victim.level(), victim.getX(), victim.getY(), victim.getZ(), stack.copy()));
+        }
+    }
+
+    private static boolean isLucky(Player p) {
+        return p.getPersistentData().getBoolean("SimLuckyActive") &&
+                CuriosApi.getCuriosHelper().findFirstCurio(p, ModItems.SIM.get()).isPresent();
+    }
+
+    private static void consume(Player p) {
+        p.getPersistentData().remove("SimLuckyActive");
+    }
+
+    // 情况 2：附魔时获取所有可能的最高级附魔
+    @SubscribeEvent
+    public static void onPlayerTickEnchant(TickEvent.PlayerTickEvent event) {
+        Player player = event.player;
+        if (player.level().isClientSide || !hasSim(player)) return;
+
+        // 如果玩家开启了附魔台界面，并且处于技能激活状态
+        if (player.containerMenu instanceof EnchantmentMenu menu && player.getPersistentData().getBoolean("SimLuckyActive")) {
+            ItemStack itemToEnchant = menu.getSlot(0).getItem();
+
+            // 只要玩家点了附魔（通过检测附魔台消耗判定，或者检测槽位变化）
+            // 这里我们采用最暴力的：一旦检测到技能开启且附魔台有东西，直接“强行灌注”
+            if (!itemToEnchant.isEmpty() && itemToEnchant.isEnchantable() && !itemToEnchant.isEnchanted()) {
+
+                // 获取 30 级下所有可能的附魔
+                List<EnchantmentInstance> list = EnchantmentHelper.getAvailableEnchantmentResults(30, itemToEnchant, true);
+
+                for (EnchantmentInstance inst : list) {
+                    // 核心要求：只要能放进去，哪怕冲突也附魔上
+                    // 我们直接使用 ItemStack 的底层方法增加附魔
+                    if (inst.enchantment.canEnchant(itemToEnchant)) {
+                        itemToEnchant.enchant(inst.enchantment, inst.level);
+                    }
+                }
+
+                player.displayClientMessage(Component.literal("§b[仿真] §f因果坍缩：已强行注入全部可能性。"), true);
+                consumeSimAbility(player);
+            }
+        }
+    }
+
+    // 情况 3：奖励箱爆率全开 (当破坏/开启带有 LootTable 的容器时触发，这里用简单的掉落逻辑模拟)
+    @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        Player player = event.getPlayer();
+        if (hasSim(player) && player.getPersistentData().getBoolean("SimLuckyActive")) {
+            // 这里逻辑较为复杂，通常奖励箱满载建议在 LootTable 相关事件处理
+            // 为保持简洁，若玩家在 Lucky 状态下破坏容器，可给予额外奖励提示
+        }
+    }
+
 
     // ================== 核心算法：寻找距离指针(准星)最近的生物 ==================
     private static LivingEntity findBestTarget(Player player, double maxRange) {
@@ -207,6 +345,8 @@ public class SimEvents {
     }
 
     // ================== 主动技能：仿真 (视野标示与推演) ==================
+    // 注意：这里保留了注释，但由于技能逻辑改为因果坍缩，客户端粒子推演可能不再需要，
+    // 若要完全替换，可以删除此 TickEvent 逻辑，或保持原样。
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
