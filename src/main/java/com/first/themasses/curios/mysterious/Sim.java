@@ -1,13 +1,10 @@
 package com.first.themasses.curios.mysterious;
 
-import com.first.themasses.networking.ModMessages;
-import com.first.themasses.networking.PacketSyncSimTime;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -53,37 +50,32 @@ public class Sim extends Item implements ICurio {
         };
     }
 
-    // 主动技能：仿真 (右键使用)
+    // 在 Sim 类中添加
+    public static void toggleAbility(Player player) {
+        if (player.level().isClientSide) return;
+
+        boolean isActive = player.getPersistentData().getBoolean("SimLuckyActive");
+        if (isActive) {
+            player.getPersistentData().putBoolean("SimLuckyActive", false);
+            player.displayClientMessage(Component.literal("§f因果缝线已关闭。"), true);
+        } else {
+            player.getPersistentData().putBoolean("SimLuckyActive", true);
+            player.displayClientMessage(Component.literal("§f因果缝线已开启"), true);
+        }
+    }
+
+    // 那么原来的 use 方法就简化成了：
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        // 逻辑：只有在服务器端运行
         if (!level.isClientSide) {
             if (CuriosApi.getCuriosHelper().findFirstCurio(player, this).isPresent()) {
                 if (!player.getCooldowns().isOnCooldown(this)) {
-                    Sim.startSimulation(player, level);
-                    // 修改为 360 秒冷却 (7200 ticks)
-                    player.getCooldowns().addCooldown(this, 7200);
-                    return InteractionResultHolder.consume(stack);
+                    Sim.toggleAbility(player); // 调用封装好的逻辑
+                    player.getCooldowns().addCooldown(this, 20);
                 }
-            } else {
-                // 如果没戴在饰品栏，提示玩家
-                player.displayClientMessage(Component.literal("§c[Sim] 必须佩戴在饰品栏才能激活仿真系统！"), true);
             }
         }
-
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
-    }
-
-    public static void startSimulation(Player player, Level level) {
-        if (!level.isClientSide) {
-            // 修改：标记技能开启。不再记录 EndTime，而是记录一个开关
-            player.getPersistentData().putBoolean("SimLuckyActive", true);
-
-            // 发送提示
-            player.displayClientMessage(Component.literal("§b[仿真] §f因果逻辑已锁定：下一次 击杀/附魔/开箱 将获得全部可能收益！"), false);
-        }
+        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide());
     }
 
     @Override

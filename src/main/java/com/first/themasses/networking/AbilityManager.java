@@ -58,9 +58,10 @@ public class AbilityManager {
         // wu1wu2 (-51)
         registerCurioAbility(-51, wu1wu2.class, (player, stack) -> wu1wu2EvolutionHandler.handleAbilityPacket(player, -51));
         // sim (-1010)
-        registerCurioAbility(-1010, Sim.class, (player, stack) -> {if (!player.getCooldowns().isOnCooldown(stack.getItem())) {
-                Sim.startSimulation(player, player.level());
-                player.getCooldowns().addCooldown(stack.getItem(), 2400); // 120秒冷却
+        registerCurioAbility(-1010, Sim.class, (player, stack) -> {
+            if (!player.getCooldowns().isOnCooldown(stack.getItem())) {
+                Sim.toggleAbility(player); // 直接调用，逻辑完全同步
+                player.getCooldowns().addCooldown(stack.getItem(), 20);
             }
         });
     }

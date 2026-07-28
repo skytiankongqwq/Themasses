@@ -29,6 +29,7 @@ import net.minecraftforge.fml.common.Mod;
 import top.theillusivec4.curios.api.CuriosApi;
 
 import java.util.Random;
+//白鲨糖
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class SweetToothEvents {

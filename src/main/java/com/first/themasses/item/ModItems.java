@@ -458,13 +458,6 @@ public class ModItems {
     public static final RegistryObject<Item> SIM = ITEMS.register(
             "sim",
             () -> new Sim(new Item.Properties().stacksTo(1))
-            {
-                @Override
-                public @NotNull Component getName(@NotNull ItemStack pStack) {
-                    return Component.translatable(this.getDescriptionId(pStack))
-                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
-                }
-            }
     );
 
 

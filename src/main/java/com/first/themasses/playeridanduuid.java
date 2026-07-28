@@ -41,6 +41,7 @@ public class playeridanduuid {
         WHITELIST_UUID.add(UUID.fromString("dcd88045-2e14-4571-acfe-f2093ab530b8")); //大理石
         WHITELIST_UUID.add(UUID.fromString("dcd88045-2e14-4571-acfe-f2093ab530b8")); //白鲨糖
         WHITELIST_UUID.add(UUID.fromString("85f1b302-9b3b-4a55-a4d2-cfffec87061a")); //菈
+        WHITELIST_UUID.add(UUID.fromString("3636ae0f-21bb-4907-9557-e432c4b80f52")); //Sim
         WHITELIST_NAME.add("Flechazo");
         WHITELIST_NAME.add("Dev");
         WHITELIST_NAME.add("dsaad145354");

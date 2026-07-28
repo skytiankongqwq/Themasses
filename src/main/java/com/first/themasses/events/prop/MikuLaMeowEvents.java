@@ -4,6 +4,7 @@ import com.core.dream_sakura.attributes.RegistryAttribute;
 import com.core.dream_sakura.client.render.miku_supreme.MikuManager;
 import com.core.dream_sakura.client.render.miku_supreme.MikuSupremeManager;
 import com.core.dream_sakura.client.render.miku_supreme.MikuSupremeCioraStManager;
+import com.first.themasses.Config;
 import com.first.themasses.item.prop.MikuLaMeowBlessingItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -32,43 +33,21 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 import java.util.UUID;
+
 @SuppressWarnings("removal")
 @Mod.EventBusSubscriber(modid = "themasses")
 public class MikuLaMeowEvents {
 
     private static final UUID MIKU_BUFF_ID = UUID.fromString("6a17b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c");
 
-    // 辅助方法：现在指向 RegistryAttribute.SCALE
     public static Attribute getMikuSizeAttr() {
         return RegistryAttribute.SCALE.get();
     }
+
     private static boolean isFriendly(LivingEntity target, Player player) {
         if (target == player) return true;
         return target.isAlliedTo(player);
     }
-
-//@Mod.EventBusSubscriber(modid = "themasses", value = Dist.CLIENT)
-//    public static class ClientEvents {
-//        @SubscribeEvent
-//        public static void onRenderPre(RenderLivingEvent.Pre<?, ?> event) {
-//            Attribute mikuSize = getMikuSizeAttr();
-//            var inst = event.getEntity().getAttribute(mikuSize);
-//            if (inst != null && inst.getValue() != 1.0D) {
-//                float s = (float) inst.getValue();
-//                event.getPoseStack().pushPose();
-//                event.getPoseStack().scale(s, s, s);
-//            }
-//        }
-//
-//        @SubscribeEvent
-//        public static void onRenderPost(RenderLivingEvent.Post<?, ?> event) {
-//            Attribute mikuSize = getMikuSizeAttr();
-//            var inst = event.getEntity().getAttribute(mikuSize);
-//            if (inst != null && inst.getValue() != 1.0D) {
-//                event.getPoseStack().popPose();
-//            }
-//        }
-//    }如果想玩2次放大就弄回来
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
@@ -126,7 +105,6 @@ public class MikuLaMeowEvents {
     }
 
     public static void triggerAreaBlessing(Player player, Level world, ItemStack stack) {
-        // 读取金块强化等级 (0-3)，每级增加 2 格半径
         int upgradeLevel = stack.getOrCreateTag().getInt("RangeUpgrade");
         double radius = 12.0D + (upgradeLevel * 2.0D);
 
@@ -139,12 +117,9 @@ public class MikuLaMeowEvents {
     }
 
     public static void applySingleBlessing(LivingEntity target, ItemStack stack) {
-        // 第一步：先激活樱花环绕特效（2.5秒 = 50 tick）
-        MikuSupremeCioraStManager.activate(target, 3); // 3秒确保覆盖2.5秒
-        
-        // 第二步：记录延迟激活的时间戳和物品数据
+        MikuSupremeCioraStManager.activate(target, 3);
         if (!target.level().isClientSide) {
-            long activateTime = target.level().getGameTime() + 50; // 2.5秒后激活
+            long activateTime = target.level().getGameTime() + 50;
             CompoundTag data = target.getPersistentData();
             data.putLong("MikuBuffActivateTime_Single", activateTime);
             data.putInt("PendingUpgradeLevel", stack.getOrCreateTag().getInt("UpgradeLevel"));
@@ -153,12 +128,9 @@ public class MikuLaMeowEvents {
     }
 
     public static void applyAreaBlessing(LivingEntity target, ItemStack stack) {
-        // 第一步：先激活樱花环绕特效（2.5秒）
         MikuSupremeCioraStManager.activate(target, 3);
-        
-        // 第二步：记录延迟激活的时间戳和物品数据
         if (!target.level().isClientSide) {
-            long activateTime = target.level().getGameTime() + 50; // 2.5秒后激活
+            long activateTime = target.level().getGameTime() + 50;
             CompoundTag data = target.getPersistentData();
             data.putLong("MikuBuffActivateTime_Area", activateTime);
             data.putInt("PendingUpgradeLevel", stack.getOrCreateTag().getInt("UpgradeLevel"));
@@ -166,19 +138,46 @@ public class MikuLaMeowEvents {
         }
     }
 
-    private static void applyCommonEffects(LivingEntity target, int duration, int levelAmp, boolean isShiftRightClick) {
-        target.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, duration, levelAmp));
-        target.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, duration, levelAmp));
+    private static void applyCommonEffects(LivingEntity target, int duration, int levelAmp, int upLevel, boolean isShiftRightClick) {
+        target.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, duration, levelAmp, false, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, duration, levelAmp, false, false, true));
 
         if (target.isInvertedHealAndHarm()) {
             addEffectIfPresent(target, "goety:necrosis", duration, levelAmp);
         } else {
-            target.addEffect(new MobEffectInstance(MobEffects.REGENERATION, duration, levelAmp));
+            target.addEffect(new MobEffectInstance(MobEffects.REGENERATION, duration, levelAmp, false, false, true));
         }
 
         int asylumAmp = isShiftRightClick ? 1 : 0;
         addEffectIfPresent(target, "more_potion_effects:asylum", duration, asylumAmp);
         addEffectIfPresent(target, "goety:deflective", duration, Math.min(2, levelAmp));
+
+        ResourceLocation loc = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(target.getType());
+        if (loc != null) {
+            String entityId = loc.toString();
+
+            // --- 精准 (more_potion_effects:accurate) ---
+            int archerLvl = -1;
+            if (Config.ACCURATE_LVL7_ENTITIES.get().contains(entityId)) archerLvl = Math.max(archerLvl, upLevel > 0 ? 6 : 5);
+            if (Config.ACCURATE_LVL5_ENTITIES.get().contains(entityId)) archerLvl = Math.max(archerLvl, upLevel > 0 ? 4 : 3);
+            if (Config.ACCURATE_LVL4_ENTITIES.get().contains(entityId)) archerLvl = Math.max(archerLvl, upLevel > 0 ? 3 : 2);
+            if (Config.ACCURATE_LVL3_ENTITIES.get().contains(entityId)) archerLvl = Math.max(archerLvl, upLevel > 0 ? 2 : 1);
+            if (Config.ACCURATE_ENTITIES.get().contains(entityId)) archerLvl = Math.max(archerLvl, Math.min(1, upLevel));
+
+            if (archerLvl != -1) {
+                // 已更正为 more_potion_effects:accurate
+                addEffectIfPresent(target, "more_potion_effects:accurate", duration, archerLvl);
+            }
+
+            // --- 魔力聚焦 (more_potion_effects:magic_focus) ---
+            int magicLvl = -1;
+            if (Config.MAGIC_FOCUS_LVL3_ENTITIES.get().contains(entityId)) magicLvl = Math.max(magicLvl, upLevel > 0 ? 2 : 1);
+            if (Config.MAGIC_FOCUS_ENTITIES.get().contains(entityId)) magicLvl = Math.max(magicLvl, Math.min(1, upLevel));
+
+            if (magicLvl != -1) {
+                addEffectIfPresent(target, "more_potion_effects:magic_focus", duration, magicLvl);
+            }
+        }
 
         if (isShiftRightClick) {
             addEffectIfPresent(target, "goety:shielding", duration, Math.min(3, levelAmp));
@@ -197,28 +196,20 @@ public class MikuLaMeowEvents {
                 long activateTime = data.getLong("MikuBuffActivateTime_Single");
                 if (currentTime >= activateTime) {
                     data.remove("MikuBuffActivateTime_Single");
-
-                    // 关键逻辑：激活高级特效前，先强制关闭普通 Miku 渲染（防止重叠）
                     MikuManager.deactivate(entity);
-
                     applyDelayedSingleBlessing(entity, data);
                 }
             }
 
-            // 2. 检查并应用延迟的范围祝福 (普通右键)
             if (data.contains("MikuBuffActivateTime_Area")) {
                 long activateTime = data.getLong("MikuBuffActivateTime_Area");
                 if (currentTime >= activateTime) {
                     data.remove("MikuBuffActivateTime_Area");
-
-                    // 核心修改：检查当前是否已经存在生效中的单体高级祝福
                     boolean isSingleActive = data.contains("MikuBuffEnd_Single") && currentTime <= data.getLong("MikuBuffEnd_Single");
 
                     if (isSingleActive) {
-                        // 如果单体高级祝福正在运行，我们只应用属性，不触发普通 MikuManager 渲染
                         applyDelayedSingleBlessing(entity, data);
                     } else {
-                        // 如果没有高级祝福，则正常触发范围祝福（含渲染）
                         applyDelayedAreaBlessing(entity, data);
                     }
                 }
@@ -234,10 +225,14 @@ public class MikuLaMeowEvents {
             if (hasSingle && !singleActive) {
                 data.remove("MikuBuffEnd_Single");
                 if (areaActive) {
-                    modify(entity, Attributes.MAX_HEALTH, 0.25, MIKU_BUFF_ID);
-                    modify(entity, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
-                    modify(entity, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
-                    modify(entity, mikuSize, 0.10, MIKU_BUFF_ID);
+                    modifyMultiply(entity, Attributes.MAX_HEALTH, 0.25, MIKU_BUFF_ID);
+                    modifyMultiply(entity, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
+                    modifyMultiply(entity, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
+                    modifyMultiply(entity, mikuSize, 0.10, MIKU_BUFF_ID);
+                    modifyMultiply(entity, Attributes.FLYING_SPEED, 0.25, MIKU_BUFF_ID);
+                    modifyAdd(entity, Attributes.KNOCKBACK_RESISTANCE, 0.2, MIKU_BUFF_ID);
+
+                    applyIronSpellbooksAttributes(entity, 0.50, 0.50);
 
                     removeModifier(entity, Attributes.MOVEMENT_SPEED, MIKU_BUFF_ID);
                     removeModifier(entity, Attributes.ARMOR_TOUGHNESS, MIKU_BUFF_ID);
@@ -255,28 +250,34 @@ public class MikuLaMeowEvents {
                 removeModifier(entity, Attributes.ATTACK_DAMAGE, MIKU_BUFF_ID);
                 removeModifier(entity, Attributes.ARMOR_TOUGHNESS, MIKU_BUFF_ID);
                 removeModifier(entity, mikuSize, MIKU_BUFF_ID);
+                removeModifier(entity, Attributes.FLYING_SPEED, MIKU_BUFF_ID);
+                removeModifier(entity, Attributes.KNOCKBACK_RESISTANCE, MIKU_BUFF_ID);
+                removeIronSpellbooksAttributes(entity);
             }
         }
     }
 
     private static void applyDelayedSingleBlessing(LivingEntity target, CompoundTag data) {
-        // 需要从物品栈获取数据，这里简化处理，假设数据已存储
         float oldMax = target.getMaxHealth();
         int upLevel = data.getInt("PendingUpgradeLevel");
         int durUp = data.getInt("PendingDurationUp");
         int singleLevel = 1 + upLevel;
         int duration = 400 + (durUp * 200);
 
-        applyCommonEffects(target, duration, singleLevel, true);
+        applyCommonEffects(target, duration, singleLevel, upLevel, true);
 
         float step = 1.0F + (singleLevel * 0.1F);
 
-        modify(target, Attributes.MAX_HEALTH, 0.5, MIKU_BUFF_ID);
-        modify(target, Attributes.MOVEMENT_SPEED, 0.2 * step, MIKU_BUFF_ID);
-        modify(target, Attributes.ARMOR, 0.2 * step, MIKU_BUFF_ID);
-        modify(target, Attributes.ATTACK_DAMAGE, 0.25 * step, MIKU_BUFF_ID);
-        modify(target, Attributes.ARMOR_TOUGHNESS, 0.25 * step, MIKU_BUFF_ID);
-        modify(target, getMikuSizeAttr(), 0.25, MIKU_BUFF_ID);
+        modifyMultiply(target, Attributes.MAX_HEALTH, 0.5, MIKU_BUFF_ID);
+        modifyMultiply(target, Attributes.MOVEMENT_SPEED, 0.2 * step, MIKU_BUFF_ID);
+        modifyMultiply(target, Attributes.ARMOR, 0.2 * step, MIKU_BUFF_ID);
+        modifyMultiply(target, Attributes.ATTACK_DAMAGE, 0.25 * step, MIKU_BUFF_ID);
+        modifyMultiply(target, Attributes.ARMOR_TOUGHNESS, 0.25 * step, MIKU_BUFF_ID);
+        modifyMultiply(target, getMikuSizeAttr(), 0.25, MIKU_BUFF_ID);
+        modifyMultiply(target, Attributes.FLYING_SPEED, 0.5, MIKU_BUFF_ID);
+        modifyAdd(target, Attributes.KNOCKBACK_RESISTANCE, 0.4, MIKU_BUFF_ID);
+
+        applyIronSpellbooksAttributes(target, 1.0, 1.0);
 
         float addedHealth = target.getMaxHealth() - oldMax;
         if (addedHealth > 0) {
@@ -284,9 +285,7 @@ public class MikuLaMeowEvents {
         }
 
         target.getPersistentData().putLong("MikuBuffEnd_Single", target.level().getGameTime() + duration);
-        
-        // 第三步：激活猫爪特效，持续时间与buff一致
-        MikuSupremeManager.activate(target, duration / 20); // 转换为秒
+        MikuSupremeManager.activate(target, duration / 20);
     }
 
     private static void applyDelayedAreaBlessing(LivingEntity target, CompoundTag data) {
@@ -296,17 +295,21 @@ public class MikuLaMeowEvents {
         int areaLevel = 0 + upLevel;
         int duration = 600 + (durUp * 200);
 
-        applyCommonEffects(target, duration, areaLevel, false);
+        applyCommonEffects(target, duration, areaLevel, upLevel, false);
 
         long currentTime = target.level().getGameTime();
         CompoundTag persistentData = target.getPersistentData();
         boolean singleActive = persistentData.contains("MikuBuffEnd_Single") && currentTime <= persistentData.getLong("MikuBuffEnd_Single");
 
         if (!singleActive) {
-            modify(target, Attributes.MAX_HEALTH, 0.25, MIKU_BUFF_ID);
-            modify(target, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
-            modify(target, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
-            modify(target, getMikuSizeAttr(), 0.10, MIKU_BUFF_ID);
+            modifyMultiply(target, Attributes.MAX_HEALTH, 0.25, MIKU_BUFF_ID);
+            modifyMultiply(target, Attributes.ARMOR, 0.1, MIKU_BUFF_ID);
+            modifyMultiply(target, Attributes.ATTACK_DAMAGE, 0.1, MIKU_BUFF_ID);
+            modifyMultiply(target, getMikuSizeAttr(), 0.10, MIKU_BUFF_ID);
+            modifyMultiply(target, Attributes.FLYING_SPEED, 0.25, MIKU_BUFF_ID);
+            modifyAdd(target, Attributes.KNOCKBACK_RESISTANCE, 0.2, MIKU_BUFF_ID);
+
+            applyIronSpellbooksAttributes(target, 0.50, 0.50);
 
             float addedHealth = target.getMaxHealth() - oldMax;
             if (addedHealth > 0) {
@@ -315,9 +318,25 @@ public class MikuLaMeowEvents {
         }
 
         target.getPersistentData().putLong("MikuBuffEnd_Area", target.level().getGameTime() + duration);
-        
-        // 第三步：激活 Miku 特效，持续时间与buff一致
-        MikuManager.activate(target, duration / 20); // 转换为秒
+        MikuManager.activate(target, duration / 20);
+    }
+
+    private static void applyIronSpellbooksAttributes(LivingEntity target, double powerAmp, double resistAmp) {
+        ResourceLocation loc = ForgeRegistries.ENTITY_TYPES.getKey(target.getType());
+        if (loc != null && Config.IRON_SPELLBOOKS_ENTITIES.get().contains(loc.toString())) {
+            Attribute spellPower = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks:spell_power"));
+            Attribute spellResist = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks:spell_resistance"));
+
+            if (spellPower != null) modifyMultiply(target, spellPower, powerAmp, MIKU_BUFF_ID);
+            if (spellResist != null) modifyMultiply(target, spellResist, resistAmp, MIKU_BUFF_ID);
+        }
+    }
+
+    private static void removeIronSpellbooksAttributes(LivingEntity target) {
+        Attribute spellPower = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks:spell_power"));
+        Attribute spellResist = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation("irons_spellbooks:spell_resistance"));
+        if (spellPower != null) removeModifier(target, spellPower, MIKU_BUFF_ID);
+        if (spellResist != null) removeModifier(target, spellResist, MIKU_BUFF_ID);
     }
 
     @SubscribeEvent
@@ -331,19 +350,27 @@ public class MikuLaMeowEvents {
         }
     }
 
-    private static void modify(LivingEntity e, Attribute a, double v, UUID u) {
+    private static void modifyMultiply(LivingEntity e, Attribute a, double v, UUID u) {
+        if (a == null) return;
         var i = e.getAttribute(a);
         if (i != null) {
             i.removeModifier(u);
             i.addTransientModifier(new AttributeModifier(u, "LaMeowBuff", v, AttributeModifier.Operation.MULTIPLY_TOTAL));
+            if (a == getMikuSizeAttr()) e.refreshDimensions();
+        }
+    }
 
-            if (a == getMikuSizeAttr()) {
-                e.refreshDimensions();
-            }
+    private static void modifyAdd(LivingEntity e, Attribute a, double v, UUID u) {
+        if (a == null) return;
+        var i = e.getAttribute(a);
+        if (i != null) {
+            i.removeModifier(u);
+            i.addTransientModifier(new AttributeModifier(u, "LaMeowBuff", v, AttributeModifier.Operation.ADDITION));
         }
     }
 
     private static void removeModifier(LivingEntity e, Attribute a, UUID u) {
+        if (a == null) return;
         var i = e.getAttribute(a);
         if (i != null) i.removeModifier(u);
     }
@@ -351,7 +378,7 @@ public class MikuLaMeowEvents {
     private static void addEffectIfPresent(LivingEntity entity, String id, int duration, int amp) {
         MobEffect effect = ForgeRegistries.MOB_EFFECTS.getValue(new ResourceLocation(id));
         if (effect != null) {
-            entity.addEffect(new MobEffectInstance(effect, duration, amp));
+            entity.addEffect(new MobEffectInstance(effect, duration, amp, false, false, true));
         }
     }
 }
