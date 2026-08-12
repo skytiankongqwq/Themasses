@@ -29,8 +29,8 @@ public class PebbleLootModifier extends LootModifier {
 
     @Override
     protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
-        // 5% 的概率增加一个物品
-        if (context.getRandom().nextFloat() < 0.05f) {
+        // 1% 的概率增加一个物品
+        if (context.getRandom().nextFloat() < 0.01f) {
             generatedLoot.add(item.copy());
         }
         return generatedLoot;
