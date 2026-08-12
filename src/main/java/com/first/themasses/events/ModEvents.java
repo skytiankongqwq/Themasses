@@ -578,8 +578,18 @@ public class ModEvents {
         Player player = event.getPlayer();
         ItemStack tool = player.getMainHandItem();
 
-        // 1. 判断是否是石头类方块
-        if (state.is(BlockTags.STONE_ORE_REPLACEABLES) || state.is(Blocks.STONE)) {
+        // 1. 判断是否是矿石类方块（带有 minecraft:ores 标签）
+        if (state.is(BlockTags.create(new ResourceLocation("minecraft", "ores")))) {
+
+            // 排除铜矿、铁矿以及原版金矿
+            ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(state.getBlock());
+            if (blockId != null) {
+                String path = blockId.getPath();
+                if (path.contains("copper") || path.contains("iron") ||
+                        blockId.equals(new ResourceLocation("minecraft", "gold_ore"))) {
+                    return;
+                }
+            }
 
             // 2. 优化：如果拥有精准采集，则不掉落小碎石
             if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, tool) > 0) {
