@@ -43,7 +43,6 @@ public class giveitem {
             new PlayerReward(UUID.fromString("7d8715c1-9224-4e2d-a516-46229b769297"), ModItems.XIN_TIRIS, 1),//天空
             new PlayerReward(UUID.fromString("7aba0098-0702-4e02-a218-f767877d96b6"), ModItems.AUVIOTRE_ITEM, 1),
             new PlayerReward(UUID.fromString("7c621bf8-a19d-4f3a-8e5b-8a75e6d81cfd"), ModItems.PLAYER__7, 1),
-            new PlayerReward(UUID.fromString("c3783bb8-677a-40f1-9955-e04a2ba3f402"), ModItems.XIAOARIN, 1),
             new PlayerReward(UUID.fromString("302757d3-f8e0-467c-8650-29686c60eb5a"), ModItems.KUN_ZHONG, 1),
             new PlayerReward(UUID.fromString("0e011c0b-a796-4ec9-9bdb-a225d2d1db6d"), ModItems.BAI_ZE_LI, 1),
             new PlayerReward(UUID.fromString("0088c328-bbc2-4b70-bd66-5e0f512f5eee"), ModItems.DUVACEIN, 1),

@@ -29,7 +29,6 @@ public class ClientKeyEvents {
     private static final Map<Class<? extends Item>, Integer> ABILITY_REGISTRY = new LinkedHashMap<>();
 
     static {
-        ABILITY_REGISTRY.put(XiaoArin.class, -888);
         ABILITY_REGISTRY.put(Playerseven.class, -777);
         ABILITY_REGISTRY.put(KunZhong.class, -999);
         ABILITY_REGISTRY.put(Baizeli.class, -666);

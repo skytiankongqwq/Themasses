@@ -200,30 +200,6 @@ public class ModItems {
                 }
             }
     );
-    //小梦樱饰品
-    public static final RegistryObject<Item> XIAOARIN = ITEMS.register(
-            "xiaoarin",
-            () -> new XiaoArin(new Item.Properties().stacksTo(1))
-            {
-                @Override
-                public @NotNull Component getName(@NotNull ItemStack pStack) {
-                    return Component.translatable(this.getDescriptionId(pStack))
-                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
-                }
-            }
-    );
-    //梦樱的祝福
-    public static final RegistryObject<Item> DREAMSAKURA = ITEMS.register(
-            "dreamsakura",
-            () -> new DreamSakuraProp(new Item.Properties().stacksTo(1))
-            {
-                @Override
-                public @NotNull Component getName(@NotNull ItemStack pStack) {
-                    return Component.translatable(this.getDescriptionId(pStack))
-                            .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55FFFF))); // 淡蓝色 (Aqua)
-                }
-            }
-    );
     //昆仲饰品
     public static final RegistryObject<Item> KUN_ZHONG = ITEMS.register(
             "kun_zhong",

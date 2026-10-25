@@ -26,8 +26,6 @@ public class AbilityManager {
     static {
         // --- 注册所有负数 ID 对应的能力逻辑 ---
 
-        // XiaoArin (-888)
-        registerCurioAbility(-888, XiaoArin.class, (player, stack) -> XiaoArin.triggerTimeStop(player));
         // Playerseven (-777)
         registerCurioAbility(-777, Playerseven.class, (player, stack) -> Playerseven.triggerAbility(player));
         // Baizeli (-666)
