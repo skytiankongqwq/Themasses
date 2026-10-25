@@ -153,7 +153,6 @@ dependencies {
     // Compile against only the API artifact
     implementation fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}")
 
-    //implementation fg.deobf("blank:dream_sakura:0.0.3_data")
     //goety
     implementation fg.deobf("curse.maven:goety-586095:7284580")
     compileOnly fg.deobf("curse.maven:goety-586095:7284580")
