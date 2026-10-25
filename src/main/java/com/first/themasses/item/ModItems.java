@@ -390,46 +390,46 @@ public class ModItems {
             }
     );
     //菈
-//    public static final RegistryObject<Item> MIKULA = ITEMS.register(
-//            "mikula",
-//            () -> new MikuLa(new Item.Properties().stacksTo(1)) {
-//                @Override
-//                public @NotNull Component getName(@NotNull ItemStack pStack) {
-//                    // 1. 获取翻译后的原始名称字符串
-//                    String rawName = Component.translatable(this.getDescriptionId(pStack)).getString();
-//                    // 2. 创建承载彩色名字的容器
-//                    MutableComponent finalName = Component.empty();
-//                    // 3. 循环处理每个字符
-//                    for (int i = 0; i < rawName.length(); i++) {
-//                        // 交替颜色：偶数为白色，奇数为淡紫色（粉色）
-//                        ChatFormatting color = (i % 2 == 0) ? ChatFormatting.WHITE : ChatFormatting.LIGHT_PURPLE;
-//                        finalName.append(Component.literal(String.valueOf(rawName.charAt(i))).withStyle(color));
-//                    }
-//                    return finalName;
-//                }
-//            }
-//    );
+    public static final RegistryObject<Item> MIKULA = ITEMS.register(
+            "mikula",
+            () -> new MikuLa(new Item.Properties().stacksTo(1)) {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    // 1. 获取翻译后的原始名称字符串
+                    String rawName = Component.translatable(this.getDescriptionId(pStack)).getString();
+                    // 2. 创建承载彩色名字的容器
+                    MutableComponent finalName = Component.empty();
+                    // 3. 循环处理每个字符
+                    for (int i = 0; i < rawName.length(); i++) {
+                        // 交替颜色：偶数为白色，奇数为淡紫色（粉色）
+                        ChatFormatting color = (i % 2 == 0) ? ChatFormatting.WHITE : ChatFormatting.LIGHT_PURPLE;
+                        finalName.append(Component.literal(String.valueOf(rawName.charAt(i))).withStyle(color));
+                    }
+                    return finalName;
+                }
+            }
+    );
     //菈的祝福
-//    public static final RegistryObject<Item> MIKUPROP = ITEMS.register(
-//            "mikuprop",
-//            () -> new MikuLaMeowBlessingItem(new Item.Properties().stacksTo(1))
-//            {
-//                @Override
-//                public @NotNull Component getName(@NotNull ItemStack pStack) {
-//                    // 1. 获取翻译后的原始名称字符串
-//                    String rawName = Component.translatable(this.getDescriptionId(pStack)).getString();
-//                    // 2. 创建承载彩色名字的容器
-//                    MutableComponent finalName = Component.empty();
-//                    // 3. 循环处理每个字符
-//                    for (int i = 0; i < rawName.length(); i++) {
-//                        // 交替颜色：偶数为白色，奇数为淡紫色（粉色）
-//                        ChatFormatting color = (i % 2 == 0) ? ChatFormatting.WHITE : ChatFormatting.LIGHT_PURPLE;
-//                        finalName.append(Component.literal(String.valueOf(rawName.charAt(i))).withStyle(color));
-//                    }
-//                    return finalName;
-//                }
-//            }
-//    );
+    public static final RegistryObject<Item> MIKUPROP = ITEMS.register(
+            "mikuprop",
+            () -> new MikuLaMeowBlessingItem(new Item.Properties().stacksTo(1))
+            {
+                @Override
+                public @NotNull Component getName(@NotNull ItemStack pStack) {
+                    // 1. 获取翻译后的原始名称字符串
+                    String rawName = Component.translatable(this.getDescriptionId(pStack)).getString();
+                    // 2. 创建承载彩色名字的容器
+                    MutableComponent finalName = Component.empty();
+                    // 3. 循环处理每个字符
+                    for (int i = 0; i < rawName.length(); i++) {
+                        // 交替颜色：偶数为白色，奇数为淡紫色（粉色）
+                        ChatFormatting color = (i % 2 == 0) ? ChatFormatting.WHITE : ChatFormatting.LIGHT_PURPLE;
+                        finalName.append(Component.literal(String.valueOf(rawName.charAt(i))).withStyle(color));
+                    }
+                    return finalName;
+                }
+            }
+    );
     //Sim
     public static final RegistryObject<Item> SIM = ITEMS.register(
             "sim",

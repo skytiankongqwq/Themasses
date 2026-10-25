@@ -1,6 +1,7 @@
 package com.first.themasses;
 
 import com.first.themasses.block.ModBlock;
+import com.first.themasses.attributes.RegistryAttribute;
 import com.first.themasses.command.MirrorTestCommand;
 import com.first.themasses.command.title.ZhilingCommand;
 import com.first.themasses.effect.ModEffects;
@@ -65,6 +66,7 @@ public class TheMasses {
         ModCreativeTabs.register(modEventBus);
         ModStructures.register(modEventBus);
         ModLootModifiers.register(modEventBus);
+        RegistryAttribute.ATTRIBUTES.register(modEventBus);
 
 
         ModMessages.register();

@@ -1,6 +1,7 @@
 package com.first.themasses.Client;
 
 import com.first.themasses.Client.entity.SmallFireBallRenderer;
+import com.first.themasses.Client.miku.MikuOverlayRegistration;
 import com.first.themasses.Client.modle.itemModel;
 import com.first.themasses.Client.entity.VoidPiercerProjectileRenderer;
 import com.first.themasses.entity.ModEntities;
@@ -24,6 +25,7 @@ public class ModClientEvents {
         event.enqueueWork(() -> {
             EntityRenderers.register(ModEntities.FLASH_CREEPER.get(), CreeperRenderer::new);
             EntityRenderers.register(ModEntities.SMALLFIRE_BALL.get(), SmallFireBallRenderer::new);
+            MikuOverlayRegistration.init();
         });
     }
 

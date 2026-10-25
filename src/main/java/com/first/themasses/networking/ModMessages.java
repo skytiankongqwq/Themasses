@@ -56,6 +56,13 @@ public class ModMessages {
                 .consumerMainThread(PacketXINTirisSkill::handle)
                 .add();
 
+        // Miku 特效状态同步
+        INSTANCE.messageBuilder(PacketMikuEffect.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(PacketMikuEffect::decode)
+                .encoder(PacketMikuEffect::encode)
+                .consumerMainThread(PacketMikuEffect::handle)
+                .add();
+
         INSTANCE.messageBuilder(PacketSyncSimTime.class, id(), NetworkDirection.PLAY_TO_CLIENT)
                 .decoder(PacketSyncSimTime::new) // 使用构造函数解码
                 .encoder(PacketSyncSimTime::encode)
@@ -75,6 +82,11 @@ public class ModMessages {
     /**
      * 发送给特定玩家 (主要用于服务端同步数据给客户端)
      */
+    /** 发送给正在追踪该实体的所有玩家（含自己）。 */
+    public static <MSG> void sendToTracking(MSG message, net.minecraft.world.entity.Entity entity) {
+        INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), message);
+    }
+
     public static <MSG> void sendToPlayer(MSG message, ServerPlayer player) {
         INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), message);
     }
