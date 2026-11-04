@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " #E",
+    " S#",
+    " T "
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:echo_shard"
+    },
+    "E": {
+      "item": "minecraft:netherite_hoe"
+    },
+    "S": {
+      "item": "minecraft:soul_sand"
+    },
+    "T": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "themasses:zhaohuanshiliandao",
+    "count": 1
+  }
+}

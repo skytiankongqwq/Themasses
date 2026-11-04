@@ -109,6 +109,7 @@ public class TheMasses {
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(ModBlock.AUVIOTRE_BLOCK.get(), RenderType.cutout());
             // 【关键修正】在客户端设置阶段注册客户端事件，确保 ReverseControlsPacket::onClientInput 在正确环境被调用
+            com.first.themasses.Client.miku.MikuOverlayRegistration.init();
             LOGGER.info("ReverseControlsPacket::onClientInput registered successfully on client.");
         });
     }

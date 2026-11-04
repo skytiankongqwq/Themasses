@@ -29,7 +29,7 @@ public class playeridanduuid {
         WHITELIST_UUID.add(UUID.fromString("dcaea69c-c759-41dc-a45d-669ab3ac8251")); //大智
         WHITELIST_UUID.add(UUID.fromString("6fb0af7c-e14e-4886-ad6e-822a62469a01")); //抗火药水
         WHITELIST_UUID.add(UUID.fromString("1e0002a0-86cd-4232-84e3-373d6e557bce")); //月灼
-        WHITELIST_UUID.add(UUID.fromString("7d8715c1-9224-4e2d-a516-46229b769297")); //天空(赫伊)
+        WHITELIST_UUID.add(UUID.fromString("7d8715c1-9224-4e2d-a516-46229b769297")); //天空
         WHITELIST_UUID.add(UUID.fromString("7aba0098-0702-4e02-a218-f767877d96b6")); //Auv
         WHITELIST_UUID.add(UUID.fromString("7c621bf8-a19d-4f3a-8e5b-8a75e6d81cfd")); //Player
         WHITELIST_UUID.add(UUID.fromString("302757d3-f8e0-467c-8650-29686c60eb5a")); //昆仲

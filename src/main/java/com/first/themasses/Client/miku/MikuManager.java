@@ -8,21 +8,16 @@ import net.minecraft.world.entity.Entity;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Miku 特效管理器：管理实体上方 Miku 图标特效的 NBT 数据和状态。
- * <p>从 Dream Sakura 的 miku_supreme 包移植；时间源改为
- * {@link System#currentTimeMillis()}，不再依赖时间倒放系统的时钟。</p>
- */
 public final class MikuManager {
 
     private static final String NBT_ENABLED = "MikuEnabled";
     private static final String NBT_DURATION = "MikuDuration";
-    private static final String NBT_START_TIME = "MikuStartTick";
 
     private static final String TEXTURE = "themasses:textures/screens/miku.png";
     private static final String MOD_NBT_TAG = "themasses_miku";
     private static final byte PACKET_TYPE = PacketMikuEffect.TYPE_MIKU;
 
+    // 必须保留缓存：客户端实体不持久化自定义 NBT，必须靠缓存记住开启状态！
     private static final ConcurrentHashMap<UUID, EffectConfig> EFFECT_CACHE = new ConcurrentHashMap<>();
 
     private MikuManager() {
@@ -43,8 +38,6 @@ public final class MikuManager {
         EffectConfig config = new EffectConfig();
         config.enabled = tag.getBoolean(NBT_ENABLED);
         config.duration = tag.getInt(NBT_DURATION);
-        config.startTime = tag.getLong(NBT_START_TIME);
-        config.texture = TEXTURE;
         EFFECT_CACHE.put(uuid, config);
         return config;
     }
@@ -57,21 +50,21 @@ public final class MikuManager {
         entity.getPersistentData().put(MOD_NBT_TAG, tag);
     }
 
-    /**
-     * @param durationSeconds 持续时间（秒）
-     */
     public static void activate(Entity entity, int durationSeconds) {
         if (entity == null) return;
 
-        boolean wasEnabled = getEffectConfig(entity).enabled;
+        EffectConfig currentConfig = getEffectConfig(entity);
+        boolean wasEnabled = currentConfig.enabled;
 
+        // 【核心修复】如果当前已经处于开启状态，直接更新时间即可，绝不重复发包，彻底杜绝闪烁！
         CompoundTag tag = getTag(entity);
         tag.putBoolean(NBT_ENABLED, true);
-        tag.putInt(NBT_DURATION, Math.max(0, durationSeconds) * 20);
-        tag.putLong(NBT_START_TIME, System.currentTimeMillis());
+        int durationTicks = Math.max(0, durationSeconds) * 20;
+        tag.putInt(NBT_DURATION, durationTicks);
         saveTag(entity, tag);
-        updateCache(entity.getUUID(), tag);
+        updateCache(entity.getUUID(), true, durationTicks);
 
+        // 只有当它【之前确实是关闭状态】时，才向追踪的客户端发送网络包
         if (!entity.level().isClientSide && !wasEnabled) {
             ModMessages.sendToTracking(
                     new PacketMikuEffect(entity.getId(), PACKET_TYPE, true, durationSeconds), entity);
@@ -86,7 +79,7 @@ public final class MikuManager {
         CompoundTag tag = getTag(entity);
         tag.putBoolean(NBT_ENABLED, false);
         saveTag(entity, tag);
-        updateCache(entity.getUUID(), tag);
+        updateCache(entity.getUUID(), false, 0);
 
         if (!entity.level().isClientSide && wasEnabled) {
             ModMessages.sendToTracking(
@@ -95,18 +88,7 @@ public final class MikuManager {
     }
 
     public static boolean shouldRender(Entity entity) {
-        EffectConfig config = getEffectConfig(entity);
-        if (!config.enabled) {
-            return false;
-        }
-        if (config.duration > 0) {
-            long elapsed = System.currentTimeMillis() - config.startTime;
-            if (elapsed >= config.duration * 50L) {
-                deactivate(entity);
-                return false;
-            }
-        }
-        return true;
+        return getEffectConfig(entity).enabled; // 纯粹由开关决定，绝不自主倒计时闪烁
     }
 
     public static int getRemainingTime(Entity entity) {
@@ -114,27 +96,18 @@ public final class MikuManager {
         if (!config.enabled || config.duration <= 0) {
             return 0;
         }
-        long remaining = config.duration * 50L - (System.currentTimeMillis() - config.startTime);
-        return (int) Math.max(0L, remaining / 1000L);
+        return config.duration / 20;
     }
 
     public static String getTexture() {
         return TEXTURE;
     }
 
-    public static void clearCache(UUID uuid) {
-        if (uuid != null) {
-            EFFECT_CACHE.remove(uuid);
-        }
-    }
-
-    private static void updateCache(UUID uuid, CompoundTag tag) {
+    private static void updateCache(UUID uuid, boolean enabled, int duration) {
         if (uuid == null) return;
-
         EffectConfig config = new EffectConfig();
-        config.enabled = tag.getBoolean(NBT_ENABLED);
-        config.duration = tag.getInt(NBT_DURATION);
-        config.startTime = tag.getLong(NBT_START_TIME);
+        config.enabled = enabled;
+        config.duration = duration;
         config.texture = TEXTURE;
         EFFECT_CACHE.put(uuid, config);
     }
@@ -142,17 +115,9 @@ public final class MikuManager {
     public static final class EffectConfig {
         public boolean enabled;
         public int duration;
-        public long startTime;
         public String texture = TEXTURE;
 
         public EffectConfig() {
-        }
-
-        public EffectConfig(boolean enabled, int duration, long startTime, String texture) {
-            this.enabled = enabled;
-            this.duration = duration;
-            this.startTime = startTime;
-            this.texture = texture;
         }
     }
 }

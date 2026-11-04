@@ -117,7 +117,8 @@ public class MikuLaMeowEvents {
     }
 
     public static void applySingleBlessing(LivingEntity target, ItemStack stack) {
-        MikuSupremeManager.activate(target, 3);
+        // 适配修改：使用 MikuPawManager 激活单体猫爪特效渲染
+        MikuPawManager.activate(target, 3);
         if (!target.level().isClientSide) {
             long activateTime = target.level().getGameTime() + 50;
             CompoundTag data = target.getPersistentData();
@@ -128,7 +129,8 @@ public class MikuLaMeowEvents {
     }
 
     public static void applyAreaBlessing(LivingEntity target, ItemStack stack) {
-        MikuSupremeManager.activate(target, 3);
+        // 适配修改：使用 MikuPawManager 激活群体特效渲染（或根据需要使用 MikuManager）
+        MikuPawManager.activate(target, 3);
         if (!target.level().isClientSide) {
             long activateTime = target.level().getGameTime() + 50;
             CompoundTag data = target.getPersistentData();
@@ -218,7 +220,6 @@ public class MikuLaMeowEvents {
             boolean areaActive = hasArea && currentTime <= data.getLong("MikuBuffEnd_Area");
             Attribute mikuSize = getMikuSizeAttr();
 
-
             // 单体 Buff 到期时的处理
             if (hasSingle && !singleActive) {
                 data.remove("MikuBuffEnd_Single");
@@ -257,6 +258,7 @@ public class MikuLaMeowEvents {
                 // 保底机制：双重确认关闭所有动画状态，防止 NBT 残留
                 MikuPawManager.deactivate(entity);
                 MikuManager.deactivate(entity);
+                MikuSupremeManager.deactivate(entity);
 
                 removeModifier(entity, Attributes.MAX_HEALTH, MIKU_BUFF_ID);
                 removeModifier(entity, Attributes.MOVEMENT_SPEED, MIKU_BUFF_ID);

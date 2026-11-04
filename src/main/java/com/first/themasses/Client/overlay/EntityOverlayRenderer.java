@@ -34,6 +34,15 @@ public class EntityOverlayRenderer {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             EntityOverlayAPI.tickAll();
+            // 注意：不要在这里调用 beginFrame() 了！
+        }
+    }
+
+    // 新增：在每一帧渲染开始时清空渲染记录，确保每帧都能正常绘制
+    @SubscribeEvent
+    public static void onRenderTick(TickEvent.RenderTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+            beginFrame();
         }
     }
 
